@@ -19,7 +19,7 @@ This is a proof-of-concept for an Ark Transaction SmartBridge listener.
   externally and pass only the message token in Ark transactions. 
   
 - The SmartBridge Listener tokenizes messages in a centralized way. It would be nice to
-  decentralize this using Sia or some other distributed content network.
+  decentralize this using LBRY or some other distributed content network.
   
 
 ## Example Consumer
@@ -28,21 +28,23 @@ The SmartBridge Listener scans Ark transactions for matching message tokens. Whe
 message is found, it sends the transaction to the consumer for further processing.
 
 In this example, we will create an "Ark Ethereum Contract Service" that allows a user to
-create an Ethereum contract using via an Ark transaction.
+create an Ethereum contract via an Ark transaction.
 
 This service will accept a block of Ethereum contract code and return a message token,
 destination Ark wallet, and required Ark amount.
 
-The client will then send an Ark transaction to the destination wallet with the message token
-in the transaction SmartData field for the required Ark amount.
+The client will then send an Ark transaction of the required Ark amount to the destination wallet with the message token
+in the transaction Smartbridge field.
 
 The Ark Transaction SmartBridge Listener will match the message token on the Ark transaction
 and forward the transaction information to the Ark Ethereum Contract Service, which will
 create an Ethereum contract with the matching message.
 
 If the listener succeeds, it sends a return transaction to the client Ark wallet with any
-un-used balance. 
+un-used balance and a message of success. 
 
 If the listener fails, it sends a return transaction to the client with 
 the original amount less transaction fees.
+
+
 
