@@ -118,7 +118,7 @@ curl -X GET 'localhost:8080/contracts/c7217c24-f94d-4ae1-b844-cf366cf03855'
   "returnArkAddress": "eijfwo91ABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qR823u20", 
   "actualArkCost": "0.80000000",
   "returnArkAmount": "0.2000000",
-  "returnArkTransactionId": "
+  "returnArkTransactionId": "49f55381c5c3c70f96d848df53ab7f9ae9881dbb8eb43e8f91f642018bf1258f",
   "contractTransactionHash": "500224999259823996",
   "contractAddress": "0xdaa24d02bad7e9d6a80106db164bad9399a0423e",
   "createdAt":"2017-07-01T22:35:57.695Z"

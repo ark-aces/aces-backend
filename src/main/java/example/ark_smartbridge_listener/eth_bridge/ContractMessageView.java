@@ -9,11 +9,14 @@ public class ContractMessageView {
     private String createdAt;
 
     private String serviceArkAddress;
+    private String estimatedGasCost;
     private String estimatedArkCost;
 
     private String returnArkAddress;
     private String actualArkCost;
     private String returnArkAmount;
+    private String returnArkTransactionId;
 
-    private String ethContractAddress;
+    private String contractTransactionHash;
+    private String contractAddress;
 }

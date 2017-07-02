@@ -40,6 +40,8 @@ public class ContractMessage {
 
     private BigDecimal returnArkAmount;
 
+    private String returnArkTransactionId;
+
     private String contractTransactionHash;
 
     private String contractAddress;

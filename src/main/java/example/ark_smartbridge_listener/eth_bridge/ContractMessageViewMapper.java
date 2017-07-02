@@ -10,8 +10,8 @@ public class ContractMessageViewMapper {
         contractMessageView.setToken(contractMessage.getToken());
 
         contractMessageView.setServiceArkAddress(contractMessage.getServiceArkAddress());
+        contractMessageView.setEstimatedGasCost(contractMessage.getEstimatedGasCost().toPlainString());
         contractMessageView.setEstimatedArkCost(contractMessage.getEstimatedArkCost().toPlainString());
-
         contractMessageView.setReturnArkAddress(contractMessage.getReturnArkAddress());
 
         if (contractMessage.getReturnArkAmount() != null) {
@@ -21,7 +21,8 @@ public class ContractMessageViewMapper {
             contractMessageView.setActualArkCost(contractMessage.getActualArkCost().toPlainString());
         }
 
-        contractMessageView.setEthContractAddress(contractMessage.getEthContractAddress());
+        contractMessageView.setContractTransactionHash(contractMessage.getContractTransactionHash());
+        contractMessageView.setContractAddress(contractMessage.getContractAddress());
 
         contractMessageView.setCreatedAt(contractMessage.getCreatedAt().toString());
 
