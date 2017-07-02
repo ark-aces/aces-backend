@@ -3,10 +3,15 @@ arkNetwork:
   scheme: http
 
 ethBridge:
-  serviceArkAddress: ???
+  ethServerUrl: http://localhost:8545
+  scriptPath: ./bin
+  nodeCommand: /usr/local/bin/node
 
-spring:
-  jackson:
-    serialization:
-      INDENT_OUTPUT: true
-    default-property-inclusion: non_null
+  serviceArkWallet:
+    address: todo
+    passphrase: hello
+    passphrase2: world
+
+  serviceEthAccount:
+    address: todo
+    password: 12345

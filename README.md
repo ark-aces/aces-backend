@@ -49,12 +49,28 @@ the original amount less transaction fees.
 
 ## Example
 
+0. Set up environment dependencies
+
+    The app requires ark-node to be running at on `localhost:4000`:
+
+    ```
+    app.js --genesis genesisBlock.testnet.json --config config.testnet.json
+    ```
+    
+    This app also requires Ethereum RPC server to be running on `localhost:8545`:
+    
+    ```
+    geth --dev --rpc --rpcapi 'web3,eth,debug' --rpccorsdomain="*"
+    ```
+    
+    You can find server configurations in [application.yml](src/main/resources/application.yml)
+   
+   
 1. Start the listener application (listens on localhost:8080)
 
     ```
-    mvn spring-boot:run
+    mvn spring-boot:run 
     ```
-    
 
 2. Create a Ethereum Contract Message
 
@@ -69,10 +85,10 @@ the original amount less transaction fees.
     
     ```
     curl -X POST 'localhost:8080/contracts' \
-      -F returnArkAddress=eijfwo91ABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qR823u20 \
-      -F abiJson=@data/solc-output/greeter.abi
-      -F code=@data/solc-output/greeter.bin
-      -F params=@data/sample-params.json
+        -F returnArkAddress=eijfwo91ABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qR823u20 \
+        -F abiJson=@data/solc-output/greeter.abi \
+        -F code=@data/solc-output/greeter.bin \
+        -F params=@data/sample-params.json
     ```
     
     ```

@@ -36,8 +36,8 @@ public class ContractController {
     private final ContractMessageRepository contractMessageRepository;
     private final ContractMessageViewMapper contractMessageViewMapper;
     private final String serviceArkAddress;
-    private final ScriptService scriptService;
-    
+    private final ScriptExecutorService scriptExecutorService;
+
     @PostMapping("/contracts")
     public ContractMessageView postContract(
         @RequestParam("abiJson") MultipartFile abiJsonFile,
@@ -45,12 +45,12 @@ public class ContractController {
         @RequestParam("params") MultipartFile paramsFile,
         @RequestParam("returnArkAddress") String returnArkAddress
     ) {
-        String code = IOUtilsWrapper.read(codeFile);
+        String code = "0x" + IOUtilsWrapper.read(codeFile);
         String abiJson = IOUtilsWrapper.read(abiJsonFile);
         String paramsJson = IOUtilsWrapper.read(paramsFile);
 
         // todo: estimate ark cost
-        Long estimatedGasCost = scriptService.executeEstimateGas(code);
+        Long estimatedGasCost = scriptExecutorService.executeEstimateGas(code).getGasEstimate();
         BigDecimal estimatedArkCost = new BigDecimal("1.00000000");
 
         ContractMessage contractMessage = new ContractMessage();
@@ -121,13 +121,13 @@ public class ContractController {
 
         // todo: estimate ark cost again. We shouldn't even try executing if ark given is too low
         String code = contractMessage.getContractCode();
-        Long estimatedGasCost = scriptService.executeEstimateGas(code);
+        Long estimatedGasCost = scriptExecutorService.executeEstimateGas(code).getGasEstimate();
         BigDecimal estimatedArkCost = new BigDecimal("1.00000000");
 
         // deploy eth contract corresponding to this ark transaction
         // todo: an error may occur during execution of before persisting the data, we should figure
         // out a way to make contract deployment idempotent
-        ContractDeployResult contractDeployResult = scriptService.executeContractDeploy(
+        ContractDeployResult contractDeployResult = scriptExecutorService.executeContractDeploy(
             contractMessage.getContractAbiJson(),
             contractMessage.getContractCode(),
             contractMessage.getContractParamsJson()

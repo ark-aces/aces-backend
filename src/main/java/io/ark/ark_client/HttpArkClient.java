@@ -9,7 +9,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HttpArkClient implements ArkClient {
     
-    private final String scheme;
     private final ArkNetwork arkNetwork;
     private final RestTemplate restTemplate;
 
@@ -26,7 +25,8 @@ public class HttpArkClient implements ArkClient {
     }
     
     private String getRandomHostBaseUrl() {
+        String httpScheme = arkNetwork.getHttpScheme();
         ArkNetworkHost targetHost = arkNetwork.getRandomHost();
-        return scheme + "://" + targetHost.getHostname() + ":" + targetHost.getPort();
+        return httpScheme + "://" + targetHost.getHostname() + ":" + targetHost.getPort();
     }
 }
