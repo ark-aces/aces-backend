@@ -46,3 +46,56 @@ un-used balance.
 If the listener fails, it sends a return transaction to the client with 
 the original amount less transaction fees.
 
+
+
+# Example
+
+1. Start the listener application (listens on localhost:8080)
+
+```
+mvn spring-boot:run
+```
+
+2. Create a Ethereum Contract Message
+
+```
+curl -X POST 'localhost:8080/contracts' -F code=@/vagrant/data/sample.sol
+```
+
+```
+{
+  "token": "c7217c24-f94d-4ae1-b844-cf366cf03855",
+  "serviceArkAddress": "hxuG6XABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qRcbSfA", 
+  "estimatedArkCost": "1.00000000",
+  "createdAt":"2017-07-01T22:35:57.695Z"
+}
+```
+
+3. Create an Ark Transaction
+
+```
+var serviceArkAddress = "hxuG6XABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qRcbSfA";
+var amount = 1.0000000;
+var token = "c7217c24-f94d-4ae1-b844-cf366cf03855";
+var transaction = ark.transaction.createTransaction(serviceArkAddress, amount, token, "passphrase", "secondPassphrase");
+```
+
+4. Check the Status of Ethereum Contract Message
+
+```
+curl -X GET 'localhost:8080/contracts/c7217c24-f94d-4ae1-b844-cf366cf03855'
+```
+
+```
+{
+  "token": "c7217c24-f94d-4ae1-b844-cf366cf03855",
+  "serviceArkAddress": "hxuG6XABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qRcbSfA", 
+  "estimatedArkCost": "1.00000000",
+  "returnArkAddress": "eijfwo91ABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qR823u20", 
+  "actualArkCost": "0.80000000",
+  "returnArkAmount": "0.2000000",
+  "returnArkTransactionId": "500224999259823996",
+  "ethContractAddress": "0xdaa24d02bad7e9d6a80106db164bad9399a0423e",
+  "createdAt":"2017-07-01T22:35:57.695Z"
+}
+```
