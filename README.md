@@ -59,7 +59,9 @@ mvn spring-boot:run
 2. Create a Ethereum Contract Message
 
 ```
-curl -X POST 'localhost:8080/contracts' -F code=@/vagrant/data/sample.sol
+curl -X POST 'localhost:8080/contracts' \
+  -F returnArkAddress=eijfwo91ABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qR823u20 \
+  -F code=@/vagrant/data/sample.sol
 ```
 
 ```
@@ -67,6 +69,7 @@ curl -X POST 'localhost:8080/contracts' -F code=@/vagrant/data/sample.sol
   "token": "c7217c24-f94d-4ae1-b844-cf366cf03855",
   "serviceArkAddress": "hxuG6XABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qRcbSfA", 
   "estimatedArkCost": "1.00000000",
+  "returnArkAddress": "eijfwo91ABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qR823u20",
   "createdAt":"2017-07-01T22:35:57.695Z"
 }
 ```
@@ -75,8 +78,8 @@ curl -X POST 'localhost:8080/contracts' -F code=@/vagrant/data/sample.sol
 
 ```
 var serviceArkAddress = "hxuG6XABWSN7swQ6Y8ner1CYHfTLeHLH6euB52fAtW6qRcbSfA";
-var amount = 1.0000000;
 var token = "c7217c24-f94d-4ae1-b844-cf366cf03855";
+var amount = 1.0000000;
 var transaction = ark.transaction.createTransaction(serviceArkAddress, amount, token, "passphrase", "secondPassphrase");
 ```
 
