@@ -20,7 +20,15 @@ public class ContractMessage {
     private String token;
 
     @Column(columnDefinition="TEXT")
-    private String code;
+    private String contractAbiJson;
+
+    @Column(columnDefinition="TEXT")
+    private String contractCode;
+
+    @Column(columnDefinition = "TEXT")
+    private String contractParamsJson;
+
+    private BigDecimal estimatedGasCost;
 
     private BigDecimal estimatedArkCost;
 
@@ -32,7 +40,9 @@ public class ContractMessage {
 
     private BigDecimal returnArkAmount;
 
-    private String ethContractAddress;
+    private String contractTransactionHash;
+
+    private String contractAddress;
 
     private ZonedDateTime createdAt;
 }

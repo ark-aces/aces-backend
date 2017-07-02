@@ -33,7 +33,7 @@ public class ArkTransactionListener {
                 if (StringUtils.isEmpty(transaction.getVendorField())) {
                     return;
                 }
-                
+
                 Message message = messageRepository.findOneByToken(transaction.getVendorField());
                 if (message != null) {
                     // We got a match! Send it to the corresponding message listener

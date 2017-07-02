@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Log4j
 @RestControllerAdvice
-public class ErrorControllerAdvice {
+public class ErrorController {
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -21,7 +21,7 @@ public class ErrorControllerAdvice {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorView error(Exception e) {
-        log.error(e);
+        log.error("Unhandled exception thrown", e);
         ErrorView errorView = new ErrorView();
         errorView.setMessage("An error occurred. Please try again later.");
         return errorView;

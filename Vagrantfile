@@ -7,20 +7,20 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
-    apt-get install software-properties-common
+    apt-get install software-properties-common build-essential
     
     add-apt-repository -y ppa:ethereum/ethereum
     apt-get update
     apt-get install ethereum solc
 
-    # run eth dev instance
-    nohup geth --dev &
+    curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+    sudo apt-get install nodejs
 
-    # create an account and mine some eth
-    # geth attach ipc:/tmp/ethereum_dev_mode/geth.ipc
-    # 
-    # personal.newAccount('12345')
-    # personal.unlockAccount(eth.coinbase)
+    # run eth dev instance
+    nohup geth --dev --rpc --rpcapi 'web3,eth,debug' --rpccorsdomain="*" &
+
+    # create an account and mine some eth using 
+    geth --dev --preload /vagrant/bin/preload.js attach ipc:/tmp/ethereum_dev_mode/geth.ipc
 
   SHELL
 end

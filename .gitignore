@@ -1,3 +1,4 @@
 /target/**
 /output/
 /.vagrant/
+/bin/node_modules/
