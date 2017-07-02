@@ -28,7 +28,7 @@ The SmartBridge Listener scans Ark transactions for matching message tokens. Whe
 message is found, it sends the transaction to the consumer for further processing.
 
 In this example, we will create an "Ark Ethereum Contract Service" that allows a user to
-create an Ethereum contract using via an Ark transaction.
+create an Ethereum contract using an Ark transaction.
 
 This service will accept a block of Ethereum contract code and return a message token,
 destination Ark wallet, and required Ark amount.
