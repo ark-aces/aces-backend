@@ -139,6 +139,31 @@ the original amount less transaction fees.
       "createdAt":"2017-07-01T22:35:57.695Z"
     }
     ```
+    
+    You can also get the original contract code:
+    
+    ```
+    curl -X GET 'localhost:8080/contracts/c7217c24-f94d-4ae1-b844-cf366cf03855/code'
+    ```
+    
+    ```
+    6060604052341561000c57fe5b604051610309380380610309833981016040528051015b5b60008054600160a060020a03191633600160a060020a03161790555b805161005390600190602084019061005b565b505b506100fb565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f1061009c57805160ff19168380011785556100c9565b828001600101855582156100c9579182015b828111156100c95782518255916020019190600101906100ae565b5b506100d69291506100da565b5090565b6100f891905b808211156100d657600081556001016100e0565b5090565b90565b6101ff8061010a6000396000f300606060405263ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166341c0e1b58114610045578063cfae321714610057575bfe5b341561004d57fe5b6100556100e7565b005b341561005f57fe5b610067610129565b6040805160208082528351818301528351919283929083019185019080838382156100ad575b8051825260208311156100ad57601f19909201916020918201910161008d565b505050905090810190601f1680156100d95780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b6000543373ffffffffffffffffffffffffffffffffffffffff908116911614156101265760005473ffffffffffffffffffffffffffffffffffffffff16ff5b5b565b6101316101c1565b60018054604080516020600284861615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156101b65780601f1061018b576101008083540402835291602001916101b6565b820191906000526020600020905b81548152906001019060200180831161019957829003601f168201915b505050505090505b90565b604080516020810190915260008152905600a165627a7a72305820b154245e7f22720ca720fbac9e63d3f11289c0b6a9c0d71d46602a0f1ec41b440029
+    ```
+    
+    ```
+    curl -X GET 'localhost:8080/contracts/c7217c24-f94d-4ae1-b844-cf366cf03855/abi'
+    ```
+    ```
+    [{"constant":false,"inputs":[],"name":"kill","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"greet","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"inputs":[{"name":"_greeting","type":"string"}],"payable":false,"type":"constructor"}]
+    ```
+    
+     ```
+    curl -X GET 'localhost:8080/contracts/c7217c24-f94d-4ae1-b844-cf366cf03855/params'
+    ```
+    
+    ```
+    ["Hello World"]
+    ```
 
 5. Running the Ethereum Contract
 
@@ -146,37 +171,10 @@ the original amount less transaction fees.
     
     ```
     geth --dev attach
-    > var address = "0xdaa24d02bad7e9d6a80106db164bad9399a0423e"
-    > var contractInfo = admin.getContractInfo(address)
+    > var contractAddress = "0xdaa24d02bad7e9d6a80106db164bad9399a0423e"
+    > var contractInfo = admin.getContractInfo(contractAddress)
     > var contract = eth.contract(contractInfo.info.abiDefinition);
-    > var instance = contract.at(address);
-    > instance
-    {
-      abi: [{
-          constant: false,
-          inputs: [],
-          name: "kill",
-          outputs: [],
-          payable: false,
-          type: "function"
-      }, {
-          constant: true,
-          inputs: [],
-          name: "greet",
-          outputs: [{...}],
-          payable: false,
-          type: "function"
-      }, {
-          inputs: [{...}],
-          payable: false,
-          type: "constructor"
-      }],
-      address: "0x51de2032566a2e01e9b1b7c3c3883493964815ad",
-      transactionHash: "0x70825b476ade1ad2416a127cc18648e1d0926824b65397f193fd2eeedfe2c9e8",
-      allEvents: function(),
-      greet: function(),
-      kill: function()
-    }
+    > var instance = contract.at(contractAddress);
     > instance.greet()
     "Hello World"
     ```
