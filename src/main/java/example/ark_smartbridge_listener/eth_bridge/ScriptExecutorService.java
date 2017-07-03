@@ -1,6 +1,6 @@
 package example.ark_smartbridge_listener.eth_bridge;
 
-import example.ark_smartbridge_listener.NiceObjectMapper;
+import lib.NiceObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;

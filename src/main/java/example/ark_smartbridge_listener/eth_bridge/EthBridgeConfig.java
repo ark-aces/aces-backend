@@ -1,7 +1,7 @@
 package example.ark_smartbridge_listener.eth_bridge;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import example.ark_smartbridge_listener.NiceObjectMapper;
+import lib.NiceObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;

@@ -1,4 +1,4 @@
-package example.ark_smartbridge_listener;
+package example.ark_smartbridge_listener.ark_listener;
 
 import org.springframework.data.repository.PagingAndSortingRepository;
 

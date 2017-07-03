@@ -1,4 +1,4 @@
-package example.ark_smartbridge_listener;
+package lib;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.web.multipart.MultipartFile;

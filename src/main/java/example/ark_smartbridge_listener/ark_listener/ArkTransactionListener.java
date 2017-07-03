@@ -1,4 +1,4 @@
-package example.ark_smartbridge_listener;
+package example.ark_smartbridge_listener.ark_listener;
 
 import io.ark.ark_client.ArkClient;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class ArkTransactionListener {
                 Message message = messageRepository.findOneByToken(transaction.getVendorField());
                 if (message != null) {
                     // We got a match! Send it to the corresponding message listener
-                    TransactionMatch transactionMatch = new TransactionMatch(transaction.getId(), message);
+                    TransactionMatch transactionMatch = new TransactionMatch(transaction.getId(), message.getToken());
                     try {
                         log.info("Posting to message to callback url " + message.getCallbackUrl() + ": " + message);
                         callbackRestTemplate.postForEntity(message.getCallbackUrl(), transactionMatch, Void.class);

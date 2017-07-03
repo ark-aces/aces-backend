@@ -1,4 +1,4 @@
-package example.ark_smartbridge_listener;
+package lib;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

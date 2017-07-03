@@ -1,4 +1,4 @@
-package example.ark_smartbridge_listener;
+package example.ark_smartbridge_listener.ark_listener;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -7,5 +7,5 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TransactionMatch {
     private final String arkTransactionId;
-    private final Message message;
+    private final String token;
 }

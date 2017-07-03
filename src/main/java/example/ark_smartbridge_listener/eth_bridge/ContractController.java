@@ -1,12 +1,14 @@
 package example.ark_smartbridge_listener.eth_bridge;
 
-import example.ark_smartbridge_listener.IOUtilsWrapper;
+import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
+import lib.IOUtilsWrapper;
 import example.ark_smartbridge_listener.NotFoundException;
-import example.ark_smartbridge_listener.TransactionMatch;
+import example.ark_smartbridge_listener.ark_listener.TransactionMatch;
+import lib.ResponseEntityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +19,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -37,6 +38,10 @@ public class ContractController {
     private final ContractMessageViewMapper contractMessageViewMapper;
     private final String serviceArkAddress;
     private final ScriptExecutorService scriptExecutorService;
+
+    private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
+        .rootUri("http://localhost:8080")
+        .build();
 
     @PostMapping("/contracts")
     public ContractMessageView postContract(
@@ -65,6 +70,12 @@ public class ContractController {
         contractMessage.setReturnArkAddress(returnArkAddress);
         contractMessageRepository.save(contractMessage);
 
+        // Register contract message with listener so we get a callback when a matching ark transaction is found
+        CreateMessageRequest createMessageRequest = new CreateMessageRequest();
+        createMessageRequest.setCallbackUrl("http://localhost:8080/ark-transactions");
+        createMessageRequest.setToken(contractMessage.getToken());
+        listenerRestTemplate.postForObject("messages", createMessageRequest, Void.class);
+
         return contractMessageViewMapper.map(contractMessage);
     }
 
@@ -79,44 +90,26 @@ public class ContractController {
     public ResponseEntity<Resource> getContractCode(@PathVariable String token) {
         ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
 
-        InputStreamResource resource = new InputStreamResource(
-            new ByteArrayInputStream(contractMessage.getContractCode().getBytes(StandardCharsets.UTF_8))
-        );
-
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .body(resource);
+        return ResponseEntityUtils.resource(contractMessage.getContractCode(), MediaType.TEXT_PLAIN);
     }
 
     @GetMapping("/contracts/{token}/abi")
     public ResponseEntity<Resource> getContractAbi(@PathVariable String token) {
         ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
 
-        InputStreamResource resource = new InputStreamResource(
-            new ByteArrayInputStream(contractMessage.getContractAbiJson().getBytes(StandardCharsets.UTF_8))
-        );
-
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON_UTF8)
-            .body(resource);
+        return ResponseEntityUtils.resource(contractMessage.getContractAbiJson(), MediaType.APPLICATION_JSON_UTF8);
     }
 
     @GetMapping("/contracts/{token}/params")
     public ResponseEntity<Resource> getContractParams(@PathVariable String token) {
         ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
 
-        InputStreamResource resource = new InputStreamResource(
-            new ByteArrayInputStream(contractMessage.getContractParamsJson().getBytes(StandardCharsets.UTF_8))
-        );
-
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON_UTF8)
-            .body(resource);
+        return ResponseEntityUtils.resource(contractMessage.getContractParamsJson(), MediaType.APPLICATION_JSON_UTF8);
     }
 
     @PostMapping("/ark-transactions")
     public void postArkTransactions(@RequestBody TransactionMatch transactionMatch) {
-        String token = transactionMatch.getMessage().getToken();
+        String token = transactionMatch.getToken();
         ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
 
         // todo: estimate ark cost again. We shouldn't even try executing if ark given is too low

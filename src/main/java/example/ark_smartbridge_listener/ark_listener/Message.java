@@ -1,4 +1,4 @@
-package example.ark_smartbridge_listener;
+package example.ark_smartbridge_listener.ark_listener;
 
 import lombok.Data;
 
@@ -16,8 +16,6 @@ public class Message {
     private Long id;
     
     private String token;
-    
-    private String data;
     
     private String callbackUrl;
     
