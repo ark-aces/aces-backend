@@ -17,6 +17,10 @@ public class ContractMessageView {
     private String returnArkAmount;
     private String returnArkTransactionId;
 
+    private String contractCode;
+    private String contractAbiJson;
+    private String contractParamsJson;
+
     private String contractTransactionHash;
     private String contractAddress;
 }

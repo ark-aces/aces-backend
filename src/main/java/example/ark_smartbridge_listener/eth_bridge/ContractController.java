@@ -40,7 +40,7 @@ public class ContractController {
     private final ScriptExecutorService scriptExecutorService;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
-        .rootUri("http://localhost:8080")
+        .rootUri("http://localhost:8080/")
         .build();
 
     @PostMapping("/contracts")
@@ -74,7 +74,7 @@ public class ContractController {
         CreateMessageRequest createMessageRequest = new CreateMessageRequest();
         createMessageRequest.setCallbackUrl("http://localhost:8080/ark-transactions");
         createMessageRequest.setToken(contractMessage.getToken());
-        listenerRestTemplate.postForObject("messages", createMessageRequest, Void.class);
+        listenerRestTemplate.postForObject("/messages", createMessageRequest, Void.class);
 
         return contractMessageViewMapper.map(contractMessage);
     }
@@ -84,27 +84,6 @@ public class ContractController {
         ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
 
         return contractMessageViewMapper.map(contractMessage);
-    }
-
-    @GetMapping("/contracts/{token}/code")
-    public ResponseEntity<Resource> getContractCode(@PathVariable String token) {
-        ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
-
-        return ResponseEntityUtils.resource(contractMessage.getContractCode(), MediaType.TEXT_PLAIN);
-    }
-
-    @GetMapping("/contracts/{token}/abi")
-    public ResponseEntity<Resource> getContractAbi(@PathVariable String token) {
-        ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
-
-        return ResponseEntityUtils.resource(contractMessage.getContractAbiJson(), MediaType.APPLICATION_JSON_UTF8);
-    }
-
-    @GetMapping("/contracts/{token}/params")
-    public ResponseEntity<Resource> getContractParams(@PathVariable String token) {
-        ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
-
-        return ResponseEntityUtils.resource(contractMessage.getContractParamsJson(), MediaType.APPLICATION_JSON_UTF8);
     }
 
     @PostMapping("/ark-transactions")

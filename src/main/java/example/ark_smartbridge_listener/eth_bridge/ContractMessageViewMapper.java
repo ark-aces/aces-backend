@@ -14,6 +14,10 @@ public class ContractMessageViewMapper {
         contractMessageView.setEstimatedArkCost(contractMessage.getEstimatedArkCost().toPlainString());
         contractMessageView.setReturnArkAddress(contractMessage.getReturnArkAddress());
 
+        contractMessageView.setContractCode(contractMessage.getContractCode());
+        contractMessageView.setContractAbiJson(contractMessage.getContractAbiJson());
+        contractMessageView.setContractParamsJson(contractMessage.getContractParamsJson());
+
         if (contractMessage.getReturnArkAmount() != null) {
             contractMessageView.setReturnArkAmount(contractMessage.getReturnArkAmount().toPlainString());
         }
