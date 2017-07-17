@@ -6,5 +6,6 @@ import java.util.List;
 
 @Data
 public class ArkNetworkSettings {
-    private List<ArkNetworkHost> hosts;
+    private String scheme;
+    private List<ArkNetworkPeer> peers;
 }

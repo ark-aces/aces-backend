@@ -11,6 +11,13 @@
 	<name>ark-smartbridge-listener</name>
 	<description>Experimental Ark SmartBridge listener</description>
 
+	<repositories>
+		<repository>
+			<id>ark-java</id>
+			<url>https://dl.bintray.com/arkecosystem/ark-java/</url>
+		</repository>
+	</repositories>
+
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
@@ -38,7 +45,6 @@
 			<groupId>io.ark.lite</groupId>
 			<artifactId>client</artifactId>
 			<version>0.3</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<dependency>

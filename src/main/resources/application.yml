@@ -8,10 +8,10 @@ ethBridge:
   nodeCommand: /usr/local/bin/node
 
   serviceArkWallet:
-    address: todo
-    passphrase: hello
-    passphrase2: world
+    address: D7WLr2EQRwUmP2R4rbnRQuASHXfDhPvBQe
+    passphrase: liar secret already much glow benefit live method during assault road nest
+    passphrase2:
 
   serviceEthAccount:
-    address: todo
+    address: 0x035ea949c57c152b1b8597c1cdc09e18ce2895cd
     password: 12345

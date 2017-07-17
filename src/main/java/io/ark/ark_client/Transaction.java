@@ -2,6 +2,7 @@ package io.ark.ark_client;
 
 import lombok.Data;
 
+import java.math.BigInteger;
 import java.util.List;
 
 @Data
@@ -14,7 +15,7 @@ public class Transaction {
     private String senderPublicKey;
     private String senderId;
     private String recipientId;
-    private Integer amount;
+    private BigInteger amount;
     private Integer fee;
     private String signature;
     private List<String> signatures;

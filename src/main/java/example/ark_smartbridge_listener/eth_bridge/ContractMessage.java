@@ -13,6 +13,26 @@ import java.time.ZonedDateTime;
 @Entity
 public class ContractMessage {
 
+    /**
+     * Contract is waiting for Ark Transaction to be found
+     */
+    public static final String STATUS_PENDING = "pending";
+
+    /**
+     * Contract was rejected because of insufficient ark
+     */
+    public static final String STATUS_REJECTED = "rejected";
+
+    /**
+     * Failure occurred trying to create Ethereum contract
+     */
+    public static final String STATUS_FAILED = "failed";
+
+    /**
+     * Contract successfully created on Ethereum
+     */
+    public static final String STATUS_COMPLETED = "completed";
+
     @Id
     @GeneratedValue
     private Long id;
@@ -28,7 +48,13 @@ public class ContractMessage {
     @Column(columnDefinition = "TEXT")
     private String contractParamsJson;
 
+    private String status;
+
+    private BigDecimal ethPerArkExchangeRate;
+
     private BigDecimal estimatedGasCost;
+
+    private BigDecimal estimatedEthCost;
 
     private BigDecimal estimatedArkCost;
 

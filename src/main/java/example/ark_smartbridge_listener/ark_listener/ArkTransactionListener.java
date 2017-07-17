@@ -14,40 +14,48 @@ import org.springframework.web.client.RestTemplate;
 @Log4j
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class ArkTransactionListener {
-    
+
+    // Number of Transactions to scan through each execution cycle
+    private final Integer scanDepthTransactions = 500;
+
     private final ArkClient arkClient;
     private final MessageRepository messageRepository;
     private final RestTemplate callbackRestTemplate;
 
     /**
-     * Run every scan in the background, with 5 seconds between scans.
+     * Run every scan in the background, with 10 seconds between scans.
      */
-    @Scheduled(fixedDelay = 5000)
+//    @Scheduled(fixedDelay = 10000)
     public void scanTransactions() {
         try {
-            // todo: this is kind of dumb because it scans the whole transaction history
-            // each cycle. It's good enough for a proof-of-concept though.
-            // It should track the last processed transaction and scan from there instead.
-            arkClient.getTransactions().parallelStream().forEach(transaction -> {
-                // Skip transaction with empty vendorField
-                if (StringUtils.isEmpty(transaction.getVendorField())) {
-                    return;
-                }
+            // todo: review this scanning so that we don't miss any transactions
+            Integer limit = 50;
+            for (Integer offset = 0; offset < scanDepthTransactions; offset += limit) {
+                log.info("Scanning transactions with offset = " + offset);
+                arkClient.getTransactions(offset).parallelStream()
+                    .forEach(transaction -> {
+                        // Skip transaction with empty vendorField
+                        if (StringUtils.isEmpty(transaction.getVendorField())) {
+                            return;
+                        }
 
-                Message message = messageRepository.findOneByToken(transaction.getVendorField());
-                if (message != null) {
-                    // We got a match! Send it to the corresponding message listener
-                    TransactionMatch transactionMatch = new TransactionMatch(transaction.getId(), message.getToken());
-                    try {
-                        log.info("Posting to message to callback url " + message.getCallbackUrl() + ": " + message);
-                        callbackRestTemplate.postForEntity(message.getCallbackUrl(), transactionMatch, Void.class);
-                    } catch (RestClientResponseException e) {
-                        log.error("Failed to post to callback url: " + message.getCallbackUrl(), e);
-                        throw e;
-                    }
-                }
-            });
-        } 
+                        log.info("Found ark transaction with vendor field: " + transaction.getVendorField());
+                        Message message = messageRepository.findOneByToken(transaction.getVendorField());
+                        if (message != null) {
+                            log.info("Matched transaction with message token: " + message.getToken());
+                            // We got a match! Send it to the corresponding message listener
+                            TransactionMatch transactionMatch = new TransactionMatch(transaction.getId(), message.getToken());
+                            try {
+                                log.info("Posting to message to callback url " + message.getCallbackUrl() + ": " + message);
+                                callbackRestTemplate.postForEntity(message.getCallbackUrl(), transactionMatch, Void.class);
+                            } catch (RestClientResponseException e) {
+                                log.error("Failed to post to callback url: " + message.getCallbackUrl(), e);
+                                throw e;
+                            }
+                        }
+                    });
+            }
+        }
         catch (Exception e) {
             log.error("Transaction listener threw exception while running", e);   
         }

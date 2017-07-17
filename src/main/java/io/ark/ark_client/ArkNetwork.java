@@ -9,9 +9,9 @@ import java.util.List;
 public class ArkNetwork {
 
     private final String httpScheme;
-    private final List<ArkNetworkHost> hosts;
+    private final List<ArkNetworkPeer> hosts;
     
-    public ArkNetworkHost getRandomHost() {
+    public ArkNetworkPeer getRandomHost() {
         return hosts.get(RandomUtils.nextInt(hosts.size()));
     }
 

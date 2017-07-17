@@ -2,14 +2,18 @@ package example.ark_smartbridge_listener.eth_bridge;
 
 import lib.NiceObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@Log4j
 public class ScriptExecutorService {
 
     private final NiceObjectMapper niceObjectMapper;
@@ -26,8 +30,8 @@ public class ScriptExecutorService {
     }
 
     public ContractDeployResult executeContractDeploy(String abiJson, String code, String paramsJson) {
-        String script = nodeCommand + " " + scriptPath + "/deploy-contract.js";
-        ProcessBuilder pb = new ProcessBuilder(script, ethServerUrl, abiJson, code, paramsJson);
+        String script = scriptPath + "/deploy-contract.js";
+        ProcessBuilder pb = new ProcessBuilder(nodeCommand, script, ethServerUrl, abiJson, code, paramsJson);
         String output = executeAndCapture(pb);
 
         return niceObjectMapper.readValue(output, ContractDeployResult.class);
@@ -35,12 +39,14 @@ public class ScriptExecutorService {
 
     private String executeAndCapture(ProcessBuilder processBuilder) {
         try {
+            log.info("executing command: " + StringUtils.join(processBuilder.command().toArray(), " "));
             Process process = processBuilder.start();
             process.waitFor();
 
             String output = IOUtils.toString(process.getInputStream(), "UTF-8");
             if (process.exitValue() != 0) {
-                throw new RuntimeException("Error running compile script: " + output);
+                String errorOutput =  IOUtils.toString(process.getErrorStream(), "UTF-8");
+                throw new RuntimeException("Error running script: " + errorOutput);
             } else {
                 return output;
             }

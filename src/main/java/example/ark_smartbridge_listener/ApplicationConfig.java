@@ -18,10 +18,9 @@ public class ApplicationConfig {
     @Bean
     public ArkClient arkClient(Environment environment) {
         // todo: we should probably just network config in json format so it can directly consume ark-node configs
-        String httpScheme = environment.getProperty("arkNetwork.scheme");
         String arkNetworkName = environment.getProperty("arkNetwork.name");
         ArkNetwork arkNetwork = new ArkNetworkFactory()
-            .createFromYml(httpScheme, "ark-config/" + arkNetworkName + ".yml");
+            .createFromYml("ark-config/" + arkNetworkName + ".yml");
         
         RestTemplate restTemplate = new RestTemplateBuilder().build();
 
