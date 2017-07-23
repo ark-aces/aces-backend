@@ -16,7 +16,7 @@ public class Transaction {
     private String senderId;
     private String recipientId;
     private BigInteger amount;
-    private Integer fee;
+    private BigInteger fee;
     private String signature;
     private List<String> signatures;
     private Integer confirmations;

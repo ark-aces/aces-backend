@@ -1,6 +1,7 @@
 package io.ark.ark_client;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 
@@ -15,7 +16,7 @@ public class HttpArkClient implements ArkClient {
     public List<Transaction> getTransactions(Integer offset) {
         return restTemplate
             .exchange(
-                getRandomHostBaseUrl() + "/api/transactions?orderBy=blockId&limit=50&offset={offset}",
+                getRandomHostBaseUrl() + "/api/transactions?orderBy=timestamp:desc&limit=50&offset={offset}",
                 HttpMethod.GET,
                 null,
                 TransactionsResponse.class,
@@ -27,11 +28,13 @@ public class HttpArkClient implements ArkClient {
 
     public Transaction getTransaction(String id) {
         return restTemplate
-            .getForObject(
+            .exchange(
                 getRandomHostBaseUrl() + "/api/transactions/get?id={id}",
-                Transaction.class,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<TransactionWrapper>() {},
                 id
-            );
+            ).getBody().getTransaction();
     }
     
     private String getRandomHostBaseUrl() {

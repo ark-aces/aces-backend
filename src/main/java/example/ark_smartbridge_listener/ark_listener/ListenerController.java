@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
@@ -20,7 +21,7 @@ public class ListenerController {
     private final MessageRepository messageRepository;
 
     @PostMapping("/messages")
-    public Message postMessage(CreateMessageRequest createMessageRequest) {
+    public Message postMessage(@RequestBody CreateMessageRequest createMessageRequest) {
         Message message = new Message();
         message.setCallbackUrl(createMessageRequest.getCallbackUrl());
         message.setToken(createMessageRequest.getToken());

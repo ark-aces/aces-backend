@@ -38,6 +38,8 @@ public class ContractController {
     // todo: get the current gas to eth rate from the network http://ethgasstation.info/
     private final BigDecimal gasPerEth = new BigDecimal("0.00000002");
 
+    private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
+
     private final ContractMessageRepository contractMessageRepository;
     private final ContractMessageViewMapper contractMessageViewMapper;
     private final String serviceArkAddress;
@@ -72,7 +74,7 @@ public class ContractController {
         contractMessage.setContractCode(code);
         contractMessage.setContractAbiJson(abiJson);
         contractMessage.setContractParamsJson(paramsJson);
-        contractMessage.setEthPerArkExchangeRate(ethPerArkExchangeRate);
+        contractMessage.setEthPerArkExchangeRate(ethPerArkExchangeRate.setScale(10, BigDecimal.ROUND_UP));
         contractMessage.setEstimatedGasCost(new BigDecimal(estimatedGasCost));
         contractMessage.setEstimatedEthCost(estimatedEthCost);
         contractMessage.setEstimatedArkCost(estimatedArkCost);
@@ -112,7 +114,10 @@ public class ContractController {
 
         // Ensure ark transaction contains enough ark to cover cost
         Transaction transaction = arkClient.getTransaction(transactionMatch.getArkTransactionId());
-        BigDecimal acceptableArkAmount = estimatedArkCost.multiply(new BigDecimal("1.2"));
+
+        // allow 2 * estimated ark + ark return transaction fee
+        BigDecimal acceptableArkAmount = estimatedArkCost.multiply(new BigDecimal("2.0"))
+            .add(arkTransactionFee);
         if (new BigDecimal(transaction.getAmount()).compareTo(acceptableArkAmount) > 0) {
             // The ark transaction does not contain sufficient ark to process
             contractMessage.setStatus(ContractMessage.STATUS_REJECTED);

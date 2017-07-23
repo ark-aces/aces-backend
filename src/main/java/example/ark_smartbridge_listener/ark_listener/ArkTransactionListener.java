@@ -16,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 public class ArkTransactionListener {
 
     // Number of Transactions to scan through each execution cycle
-    private final Integer scanDepthTransactions = 500;
+    private final Integer scanDepthTransactions = 50;
 
     private final ArkClient arkClient;
     private final MessageRepository messageRepository;
@@ -25,14 +25,14 @@ public class ArkTransactionListener {
     /**
      * Run every scan in the background, with 10 seconds between scans.
      */
-//    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 1000)
     public void scanTransactions() {
         try {
             // todo: review this scanning so that we don't miss any transactions
             Integer limit = 50;
             for (Integer offset = 0; offset < scanDepthTransactions; offset += limit) {
                 log.info("Scanning transactions with offset = " + offset);
-                arkClient.getTransactions(offset).parallelStream()
+                arkClient.getTransactions(offset).stream()
                     .forEach(transaction -> {
                         // Skip transaction with empty vendorField
                         if (StringUtils.isEmpty(transaction.getVendorField())) {

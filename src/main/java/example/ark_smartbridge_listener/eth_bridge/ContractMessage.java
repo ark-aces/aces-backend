@@ -50,20 +50,26 @@ public class ContractMessage {
 
     private String status;
 
+    @Column(precision = 9, scale = 8)
     private BigDecimal ethPerArkExchangeRate;
 
+    @Column(precision = 9, scale = 8)
     private BigDecimal estimatedGasCost;
 
+    @Column(precision = 9, scale = 8)
     private BigDecimal estimatedEthCost;
 
+    @Column(precision = 9, scale = 8)
     private BigDecimal estimatedArkCost;
 
     private String serviceArkAddress;
 
     private String returnArkAddress;
 
+    @Column(precision = 9, scale = 8)
     private BigDecimal actualArkCost;
 
+    @Column(precision = 9, scale = 8)
     private BigDecimal returnArkAmount;
 
     private String returnArkTransactionId;

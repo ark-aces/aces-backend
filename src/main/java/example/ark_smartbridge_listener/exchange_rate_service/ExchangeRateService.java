@@ -27,6 +27,6 @@ public class ExchangeRateService
                 toCurrencyCode
             )
             .getBody()
-            .get(fromCurrencyCode);
+            .get(toCurrencyCode);
     }
 }
