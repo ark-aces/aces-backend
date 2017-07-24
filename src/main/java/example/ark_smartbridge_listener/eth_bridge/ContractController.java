@@ -40,12 +40,15 @@ public class ContractController {
 
     private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
 
+    private final BigInteger arkPerSatoshi = new BigInteger("100000000");
+
     private final ContractMessageRepository contractMessageRepository;
     private final ContractMessageViewMapper contractMessageViewMapper;
     private final String serviceArkAddress;
     private final ScriptExecutorService scriptExecutorService;
     private final ExchangeRateService exchangeRateService;
     private final ArkClient arkClient;
+    private final String serviceArkPassphrase;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
         .rootUri("http://localhost:8080/")
@@ -67,6 +70,8 @@ public class ContractController {
         // todo: we should sanity check the exchange rate to prevent a bad rate being used
         BigDecimal ethPerArkExchangeRate = exchangeRateService.getRate("ETH", "ARK");
         BigDecimal estimatedArkCost = estimatedEthCost.divide(ethPerArkExchangeRate, RoundingMode.HALF_UP);
+        BigDecimal requiredArkCost = estimatedArkCost.multiply(new BigDecimal("2.0")) // require a 2x buffer
+            .add(arkTransactionFee); // add transaction fee for return transaction
 
         ContractMessage contractMessage = new ContractMessage();
         contractMessage.setStatus(ContractMessage.STATUS_PENDING);
@@ -74,10 +79,10 @@ public class ContractController {
         contractMessage.setContractCode(code);
         contractMessage.setContractAbiJson(abiJson);
         contractMessage.setContractParamsJson(paramsJson);
-        contractMessage.setEthPerArkExchangeRate(ethPerArkExchangeRate.setScale(10, BigDecimal.ROUND_UP));
-        contractMessage.setEstimatedGasCost(new BigDecimal(estimatedGasCost));
-        contractMessage.setEstimatedEthCost(estimatedEthCost);
-        contractMessage.setEstimatedArkCost(estimatedArkCost);
+        contractMessage.setEthPerArkExchangeRate(ethPerArkExchangeRate.setScale(8, BigDecimal.ROUND_UP));
+        contractMessage.setEstimatedGasCost(new BigDecimal(estimatedGasCost).setScale(8, BigDecimal.ROUND_UP));
+        contractMessage.setEstimatedEthCost(estimatedEthCost.setScale(8, BigDecimal.ROUND_UP));
+        contractMessage.setRequiredArkCost(requiredArkCost.setScale(8, BigDecimal.ROUND_UP));
         contractMessage.setCreatedAt(ZonedDateTime.from(Instant.now().atOffset(ZoneOffset.UTC)));
         contractMessage.setServiceArkAddress(serviceArkAddress);
         contractMessage.setReturnArkAddress(returnArkAddress);
@@ -111,46 +116,59 @@ public class ContractController {
         // todo: we should sanity check the exchange rate to prevent a bad rate being used
         BigDecimal ethPerArkExchangeRate = exchangeRateService.getRate("ETH", "ARK");
         BigDecimal estimatedArkCost = estimatedEthCost.divide(ethPerArkExchangeRate, RoundingMode.HALF_UP);
+        BigDecimal requiredArkCost = estimatedArkCost.multiply(new BigDecimal("2.0")) // require a 2x buffer
+            .add(arkTransactionFee); // add transaction fee for return transaction
 
-        // Ensure ark transaction contains enough ark to cover cost
         Transaction transaction = arkClient.getTransaction(transactionMatch.getArkTransactionId());
 
-        // allow 2 * estimated ark + ark return transaction fee
-        BigDecimal acceptableArkAmount = estimatedArkCost.multiply(new BigDecimal("2.0"))
-            .add(arkTransactionFee);
-        if (new BigDecimal(transaction.getAmount()).compareTo(acceptableArkAmount) > 0) {
+        // Ensure ark transaction contains enough ark to cover cost
+        if (new BigDecimal(transaction.getAmount()).compareTo(requiredArkCost) > 0) {
             // The ark transaction does not contain sufficient ark to process
             contractMessage.setStatus(ContractMessage.STATUS_REJECTED);
 
-            // todo: we should subtract ark transaction fees from return amount
-            BigInteger returnArkAmount = transaction.getAmount();
-            contractMessage.setReturnArkAmount(new BigDecimal(returnArkAmount));
+            // Subtract ark transaction fees from return amount
+            Long arkTransactionFeeSatoshis = arkTransactionFee
+                .multiply(new BigDecimal(arkPerSatoshi))
+                .toBigIntegerExact().longValue();
+            Long returnSatoshiAmount = transaction.getAmount() - arkTransactionFeeSatoshis;
+            BigDecimal returnArkAmount = new BigDecimal(returnSatoshiAmount)
+                .divide(new BigDecimal(arkPerSatoshi), BigDecimal.ROUND_UP);
+            contractMessage.setReturnArkAmount(returnArkAmount);
 
-            // todo create return ark transaction with remaining ark
-            // contractMessage.setReturnArkTransactionId("...");
+            // handle the case where an error occurs sending return ark.
+            // Create return ark transaction with remaining ark
+            Transaction returnTransaction = arkClient.createTransaction(
+                contractMessage.getReturnArkAddress(),
+                returnSatoshiAmount,
+                contractMessage.getToken(),
+                serviceArkPassphrase
+            );
+            contractMessage.setReturnArkTransactionId(returnTransaction.getId());
 
             contractMessageRepository.save(contractMessage);
         }
+        else {
+            // todo: since this breaks a transaction boundary and eth contract deployment is not idempotent,
+            // we should handle the failure scenario in a better way
 
-        // deploy eth contract corresponding to this ark transaction
-        // todo: an error may occur during execution of before persisting the data, we should figure
-        // out a way to make contract deployment idempotent
-        ContractDeployResult contractDeployResult = scriptExecutorService.executeContractDeploy(
-            contractMessage.getContractAbiJson(),
-            contractMessage.getContractCode(),
-            contractMessage.getContractParamsJson()
-        );
-        contractMessage.setContractTransactionHash(contractDeployResult.getTransactionHash());
-        contractMessage.setContractAddress(contractDeployResult.getAddress());
+            // deploy eth contract corresponding to this ark transaction
+            ContractDeployResult contractDeployResult = scriptExecutorService.executeContractDeploy(
+                contractMessage.getContractAbiJson(),
+                contractMessage.getContractCode(),
+                contractMessage.getContractParamsJson()
+            );
+            contractMessage.setContractTransactionHash(contractDeployResult.getTransactionHash());
+            contractMessage.setContractAddress(contractDeployResult.getAddress());
 
-        // todo: need to figure out actual eth/ark costs and save to message
-        // contractMessage.setActualArkCost(actualArkCost);
+            // todo: need to figure out actual eth/ark costs and save to message
+            // contractMessage.setActualArkCost(actualArkCost);
 
-        // todo: we should refund remaining ark to returnArkAddress
-        // contractMessage.setReturnArkTransactionId("...");
+            // todo: we should refund remaining ark to returnArkAddress
+            // contractMessage.setReturnArkTransactionId("...");
 
-        contractMessage.setStatus(ContractMessage.STATUS_COMPLETED);
-        contractMessageRepository.save(contractMessage);
+            contractMessage.setStatus(ContractMessage.STATUS_COMPLETED);
+            contractMessageRepository.save(contractMessage);
+        }
     }
 
     private ContractMessage getContractMessageOrThrowNotFound(String token) {

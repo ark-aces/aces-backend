@@ -11,7 +11,8 @@ public class ContractMessageViewMapper {
 
         contractMessageView.setServiceArkAddress(contractMessage.getServiceArkAddress());
         contractMessageView.setEstimatedGasCost(contractMessage.getEstimatedGasCost().toPlainString());
-        contractMessageView.setEstimatedArkCost(contractMessage.getEstimatedArkCost().toPlainString());
+        contractMessageView.setEstimatedEthCost(contractMessage.getEstimatedEthCost().toPlainString());
+        contractMessageView.setRequiredArkCost(contractMessage.getRequiredArkCost().toPlainString());
         contractMessageView.setReturnArkAddress(contractMessage.getReturnArkAddress());
 
         contractMessageView.setContractCode(contractMessage.getContractCode());

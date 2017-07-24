@@ -10,7 +10,8 @@ public class ContractMessageView {
 
     private String serviceArkAddress;
     private String estimatedGasCost;
-    private String estimatedArkCost;
+    private String estimatedEthCost;
+    private String requiredArkCost;
 
     private String returnArkAddress;
     private String actualArkCost;
