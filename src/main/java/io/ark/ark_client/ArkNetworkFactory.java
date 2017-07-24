@@ -11,6 +11,12 @@ public class ArkNetworkFactory {
         InputStream fileInputStream = ResourceUtils.getInputStream(configFilename);
         ArkNetworkSettings arkNetworkSettings = yaml.loadAs(fileInputStream, ArkNetworkSettings.class);
         
-        return new ArkNetwork(arkNetworkSettings.getScheme(), arkNetworkSettings.getPeers());
+        return new ArkNetwork(
+            arkNetworkSettings.getScheme(),
+            arkNetworkSettings.getPeers(),
+            arkNetworkSettings.getNetHash(),
+            arkNetworkSettings.getPort(),
+            arkNetworkSettings.getVersion()
+        );
     }
 }

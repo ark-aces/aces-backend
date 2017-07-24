@@ -94,6 +94,10 @@ public class HttpArkClient implements ArkClient {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("nethash", arkNetwork.getNetHash());
+        headers.set("version", arkNetwork.getVersion());
+        headers.set("port", arkNetwork.getPort());
+
         HttpEntity<CreateArkTransactionsRequest> requestEntity = new HttpEntity<>(createArkTransactionsRequest, headers);
 
         return restTemplate

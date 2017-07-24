@@ -8,4 +8,7 @@ import java.util.List;
 public class ArkNetworkSettings {
     private String scheme;
     private List<ArkNetworkPeer> peers;
+    private String netHash;
+    private String port;
+    private String version;
 }

@@ -120,9 +120,12 @@ public class ContractController {
             .add(arkTransactionFee); // add transaction fee for return transaction
 
         Transaction transaction = arkClient.getTransaction(transactionMatch.getArkTransactionId());
+        BigDecimal transactionArkAmount = new BigDecimal(transaction.getAmount())
+            .setScale(14, BigDecimal.ROUND_UP)
+            .divide(new BigDecimal(arkPerSatoshi), BigDecimal.ROUND_UP);
 
         // Ensure ark transaction contains enough ark to cover cost
-        if (new BigDecimal(transaction.getAmount()).compareTo(requiredArkCost) > 0) {
+        if (transactionArkAmount.compareTo(requiredArkCost) < 0) {
             // The ark transaction does not contain sufficient ark to process
             contractMessage.setStatus(ContractMessage.STATUS_REJECTED);
 
@@ -131,19 +134,25 @@ public class ContractController {
                 .multiply(new BigDecimal(arkPerSatoshi))
                 .toBigIntegerExact().longValue();
             Long returnSatoshiAmount = transaction.getAmount() - arkTransactionFeeSatoshis;
+            if (returnSatoshiAmount < 0) {
+                returnSatoshiAmount = 0L;
+            }
             BigDecimal returnArkAmount = new BigDecimal(returnSatoshiAmount)
+                .setScale(14, BigDecimal.ROUND_UP)
                 .divide(new BigDecimal(arkPerSatoshi), BigDecimal.ROUND_UP);
             contractMessage.setReturnArkAmount(returnArkAmount);
 
-            // handle the case where an error occurs sending return ark.
-            // Create return ark transaction with remaining ark
-            Transaction returnTransaction = arkClient.createTransaction(
-                contractMessage.getReturnArkAddress(),
-                returnSatoshiAmount,
-                contractMessage.getToken(),
-                serviceArkPassphrase
-            );
-            contractMessage.setReturnArkTransactionId(returnTransaction.getId());
+            if (returnSatoshiAmount > 0) {
+                // todo: handle the case where an error occurs sending return ark.
+                // Create return ark transaction with remaining ark
+                Transaction returnTransaction = arkClient.createTransaction(
+                    contractMessage.getReturnArkAddress(),
+                    returnSatoshiAmount,
+                    contractMessage.getToken(),
+                    serviceArkPassphrase
+                );
+                contractMessage.setReturnArkTransactionId(returnTransaction.getId());
+            }
 
             contractMessageRepository.save(contractMessage);
         }
