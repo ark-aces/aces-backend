@@ -19,7 +19,7 @@ This is a proof-of-concept for an Ark Transaction SmartBridge listener.
   externally and pass only the message token in Ark transactions. 
   
 - The SmartBridge Listener tokenizes messages in a centralized way. It would be nice to
-  decentralize this using LBRY or some other distributed content network.
+  decentralize this using IPFS or some other distributed content network.
   
 
 ## Explanation
