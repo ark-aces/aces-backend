@@ -48,13 +48,14 @@ public class ContractMessage {
     @Column(columnDefinition = "TEXT")
     private String contractParamsJson;
 
+    private Long gasLimit;
+
     private String status;
 
     @Column(precision = 20, scale = 8)
-    private BigDecimal ethPerArkExchangeRate;
+    private BigDecimal arkPerEthExchangeRate;
 
-    @Column(precision = 20, scale = 8)
-    private BigDecimal estimatedGasCost;
+    private Long estimatedGasCost;
 
     @Column(precision = 20, scale = 8)
     private BigDecimal estimatedEthCost;
@@ -67,7 +68,7 @@ public class ContractMessage {
     private String returnArkAddress;
 
     @Column(precision = 20, scale = 8)
-    private BigDecimal actualArkCost;
+    private BigDecimal deploymentArkCost;
 
     @Column(precision = 20, scale = 8)
     private BigDecimal returnArkAmount;
@@ -77,6 +78,8 @@ public class ContractMessage {
     private String contractTransactionHash;
 
     private String contractAddress;
+
+    private Long gasUsed;
 
     private ZonedDateTime createdAt;
 }

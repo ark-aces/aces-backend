@@ -24,7 +24,7 @@ Vagrant.configure("2") do |config|
     sudo apt-get install nodejs
 
     # run eth dev instance
-    nohup geth --dev --rpc --rpcaddr=0.0.0.0 --rpcapi 'web3,eth,debug' --rpccorsdomain="*" &
+    nohup geth --dev --rpc --rpcaddr=0.0.0.0 --rpcapi 'web3,eth,personal,debug' --rpccorsdomain="*" &
 
     # create an account and mine some eth using 
     geth --dev --preload /vagrant/bin/preload.js attach ipc:/tmp/ethereum_dev_mode/geth.ipc

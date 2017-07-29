@@ -57,7 +57,7 @@ public class HttpArkClient implements ArkClient {
     // todo: support second passphrase signing
     // todo: support different transaction types
     @Override
-    public Transaction createTransaction(String recipientId, Long satoshiAmount, String vendorField, String passphrase) {
+    public String createTransaction(String recipientId, Long satoshiAmount, String vendorField, String passphrase) {
         Date beginEpoch;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -105,8 +105,11 @@ public class HttpArkClient implements ArkClient {
                 getRandomHostBaseUrl() + "/peer/transactions",
                 HttpMethod.POST,
                 requestEntity,
-                new ParameterizedTypeReference<TransactionWrapper>() {}
-            ).getBody().getTransaction();
+                new ParameterizedTypeReference<TransactionIdsWrapper>() {}
+            )
+            .getBody()
+            .getTransactionIds()
+            .get(0);
     }
 
     private byte[] getBytes(CreateArkTransactionRequest createArkTransactionRequest, String senderPublicKey) {

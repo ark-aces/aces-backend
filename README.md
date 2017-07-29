@@ -88,7 +88,8 @@ the original amount less transaction fees.
         -F returnArkAddress=ARNJJruY6RcuYCXcwWsu4bx9kyZtntqeAx \
         -F abiJson=@data/solc-output/greeter.abi \
         -F code=@data/solc-output/greeter.bin \
-        -F params=@data/sample-params.json
+        -F params=@data/sample-params.json \
+        -F gasLimit=500000
     ```
     
     ```

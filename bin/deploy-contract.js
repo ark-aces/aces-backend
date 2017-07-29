@@ -17,33 +17,41 @@ Result:
  */
 // todo: figure out how long this script might take to run against real eth network since
 // it waits for contract transactions to be mined before returning address
-if (process.argv.length <= 5) {
-    console.log("Usage: " + __filename + " {{abiJson}} {{contractCodeBinary}} {{contractParamsJson}}");
+if (process.argv.length <= 7) {
+    console.log("Usage: " + __filename + " {{ethServiceUrl}} {{walletAddress}} {{walletPassword}} " +
+        "{{abiJson}} {{contractCodeBinary}} {{contractParamsJson}} {{gasLimit}}");
     process.exit(-1);
 }
 
 var Web3 = require('web3');
-
 var ethServerUrl = process.argv[2];
-var abi = JSON.parse(process.argv[3]);
-var code = process.argv[4];
-var params = JSON.parse(process.argv[5]);
+var walletAddress = process.argv[3];
+var walletPassword = process.argv[4];
+var abi = JSON.parse(process.argv[5]);
+var code = process.argv[6];
+var params = JSON.parse(process.argv[7]);
+var gasLimit = process.argv[8];
 
 var web3 = new Web3();
 web3.setProvider(new web3.providers.HttpProvider(ethServerUrl));
 
+// Get the eth account and unlock
+// todo: load account by address and not 0 index
+var account = web3.eth.accounts[0];
+web3.personal.unlockAccount(account, walletPassword);
+
+// Look up current gasPrice or use externally provided value from the client
+var gasPrice = 20000000000;
+
+// Set up contract
 var contract = web3.eth.contract(abi);
-
-// todo: externalize account information, this is currently hard coded to test values
-web3.personal.unlockAccount(web3.eth.accounts[0], "12345");
-
-// todo: figure out what gas limit should be, or pass it in as a param
 var instance = contract.new(
     ...params,
     {
-        from: web3.eth.accounts[0],
+        from: account,
         data: code,
-        gas: 1000000
+        gasPrice: gasPrice,
+        gas: gasLimit
     },
     function(err, contract) {
         // This callback gets called once when contract transaction is created and once when
@@ -52,9 +60,13 @@ var instance = contract.new(
             console.log(err);
             process.exit(-1);
         } else if (contract.address) {
+            // todo: find out if there is a way to get actual gas consumed after deploying contract
+            var gasEstimate = web3.eth.estimateGas({data: code});
+
             console.log(JSON.stringify({
                 "transactionHash": contract.transactionHash,
-                "address": contract.address
+                "address": contract.address,
+                "gasUsed": gasEstimate
             }));
         }
     }

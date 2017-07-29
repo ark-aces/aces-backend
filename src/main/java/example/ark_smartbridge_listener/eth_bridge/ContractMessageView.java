@@ -9,7 +9,8 @@ public class ContractMessageView {
     private String createdAt;
 
     private String serviceArkAddress;
-    private String estimatedGasCost;
+    private String arkPerEthExchangeRate;
+    private Long estimatedGasCost;
     private String estimatedEthCost;
     private String requiredArkCost;
 
@@ -21,7 +22,9 @@ public class ContractMessageView {
     private String contractCode;
     private String contractAbiJson;
     private String contractParamsJson;
+    private Long gasLimit;
 
     private String contractTransactionHash;
     private String contractAddress;
+    private Long gasUsed;
 }

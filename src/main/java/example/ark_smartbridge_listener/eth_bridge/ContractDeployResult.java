@@ -6,4 +6,5 @@ import lombok.Data;
 public class ContractDeployResult {
     private String transactionHash;
     private String address;
+    private Long gasUsed;
 }

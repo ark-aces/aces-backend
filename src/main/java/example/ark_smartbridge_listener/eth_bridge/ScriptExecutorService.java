@@ -21,6 +21,10 @@ public class ScriptExecutorService {
     private final String scriptPath;
     private final String nodeCommand;
 
+    private final String serviceEthAccountAddress;
+    private final String serviceEthAccountPassword;
+
+
     public GasEstimateResult executeEstimateGas(String code) {
         String script = scriptPath + "/estimate-gas.js";
         ProcessBuilder pb = new ProcessBuilder(nodeCommand, script, ethServerUrl, code);
@@ -29,9 +33,20 @@ public class ScriptExecutorService {
         return niceObjectMapper.readValue(output, GasEstimateResult.class);
     }
 
-    public ContractDeployResult executeContractDeploy(String abiJson, String code, String paramsJson) {
+    public ContractDeployResult executeContractDeploy(String abiJson, String code, String paramsJson, Long gasLimit) {
         String script = scriptPath + "/deploy-contract.js";
-        ProcessBuilder pb = new ProcessBuilder(nodeCommand, script, ethServerUrl, abiJson, code, paramsJson);
+
+        ProcessBuilder pb = new ProcessBuilder(
+            nodeCommand,
+            script,
+            ethServerUrl,
+            serviceEthAccountAddress,
+            serviceEthAccountPassword,
+            abiJson,
+            code,
+            paramsJson,
+            gasLimit.toString()
+        );
         String output = executeAndCapture(pb);
 
         return niceObjectMapper.readValue(output, ContractDeployResult.class);
