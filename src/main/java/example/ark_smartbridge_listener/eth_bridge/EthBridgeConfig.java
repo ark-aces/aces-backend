@@ -5,6 +5,10 @@ import lib.NiceObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 
 @Configuration
 public class EthBridgeConfig {
@@ -47,5 +51,21 @@ public class EthBridgeConfig {
     @Bean
     public NiceObjectMapper defaultObjectMapper() {
         return new NiceObjectMapper(new ObjectMapper());
+    }
+
+    @Bean
+    public RetryTemplate arkClientRetryTemplate() {
+        RetryTemplate retryTemplate = new RetryTemplate();
+
+        ExponentialBackOffPolicy exponentialBackOffPolicy = new ExponentialBackOffPolicy();
+        exponentialBackOffPolicy.setInitialInterval(100);
+        exponentialBackOffPolicy.setMultiplier(2.0);
+        retryTemplate.setBackOffPolicy(exponentialBackOffPolicy);
+
+        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
+        retryPolicy.setMaxAttempts(5);
+        retryTemplate.setRetryPolicy(retryPolicy);
+
+        return retryTemplate;
     }
 }

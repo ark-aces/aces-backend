@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,6 +49,7 @@ public class ContractController {
     private final ExchangeRateService exchangeRateService;
     private final ArkClient arkClient;
     private final String serviceArkPassphrase;
+    private final RetryTemplate arkClientRetryTemplate;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
         .rootUri("http://localhost:8080/")
@@ -132,7 +134,8 @@ public class ContractController {
         BigDecimal requiredArkCost = estimatedArkCost.multiply(new BigDecimal("2.0")) // require a 2x buffer
             .add(arkTransactionFee); // add transaction fee for return transaction
 
-        Transaction transaction = arkClient.getTransaction(transactionMatch.getArkTransactionId());
+        Transaction transaction = arkClientRetryTemplate.execute(retryContext ->
+            arkClient.getTransaction(transactionMatch.getArkTransactionId()));
 
         BigDecimal transactionArkAmount = new BigDecimal(transaction.getAmount())
             .setScale(14, BigDecimal.ROUND_UP)
@@ -188,12 +191,15 @@ public class ContractController {
         if (returnSatoshiAmount > 0) {
             // todo: handle the case where an error occurs sending return ark.
             // Create return ark transaction with remaining ark
-            String returnArkTransactionId = arkClient.createTransaction(
-                contractMessage.getReturnArkAddress(),
-                returnSatoshiAmount,
-                contractMessage.getToken(),
-                serviceArkPassphrase
-            );
+            Long finalReturnSatoshiAmount = returnSatoshiAmount;
+            String returnArkTransactionId = arkClientRetryTemplate.execute(retryContext ->
+                arkClient.createTransaction(
+                    contractMessage.getReturnArkAddress(),
+                    finalReturnSatoshiAmount,
+                    contractMessage.getToken(),
+                    serviceArkPassphrase
+                ));
+
             contractMessage.setReturnArkTransactionId(returnArkTransactionId);
         }
 

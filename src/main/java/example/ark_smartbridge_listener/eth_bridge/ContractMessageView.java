@@ -7,6 +7,7 @@ public class ContractMessageView {
 
     private String token;
     private String createdAt;
+    private String status;
 
     private String serviceArkAddress;
     private String arkPerEthExchangeRate;
@@ -15,7 +16,7 @@ public class ContractMessageView {
     private String requiredArkCost;
 
     private String returnArkAddress;
-    private String actualArkCost;
+    private String deploymentArkCost;
     private String returnArkAmount;
     private String returnArkTransactionId;
 
