@@ -117,6 +117,11 @@ public class ContractController {
         String token = transactionMatch.getToken();
         ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
 
+        // Skip already processed transactions
+        if (! contractMessage.getStatus().equals(ContractMessage.STATUS_PENDING)) {
+            return;
+        }
+
         String code = contractMessage.getContractCode();
 
         Long estimatedGasCost = scriptExecutorService.executeEstimateGas(code).getGasEstimate();
