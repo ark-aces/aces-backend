@@ -10,6 +10,9 @@ import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
 public class EthBridgeConfig {
 
@@ -57,12 +60,15 @@ public class EthBridgeConfig {
     public RetryTemplate arkClientRetryTemplate() {
         RetryTemplate retryTemplate = new RetryTemplate();
 
+        Map<Class<? extends Throwable>, Boolean> includeExceptions = new HashMap<>();
+        includeExceptions.put(RuntimeException.class, true);
+
         ExponentialBackOffPolicy exponentialBackOffPolicy = new ExponentialBackOffPolicy();
         exponentialBackOffPolicy.setInitialInterval(100);
         exponentialBackOffPolicy.setMultiplier(2.0);
         retryTemplate.setBackOffPolicy(exponentialBackOffPolicy);
 
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
+        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(5, includeExceptions);
         retryPolicy.setMaxAttempts(5);
         retryTemplate.setRetryPolicy(retryPolicy);
 
