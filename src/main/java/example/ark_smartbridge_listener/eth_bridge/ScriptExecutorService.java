@@ -1,5 +1,6 @@
 package example.ark_smartbridge_listener.eth_bridge;
 
+import io.ark.ark_client.EthTransactionResult;
 import lib.NiceObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
@@ -9,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -50,6 +50,23 @@ public class ScriptExecutorService {
         String output = executeAndCapture(pb);
 
         return niceObjectMapper.readValue(output, ContractDeployResult.class);
+    }
+
+    public EthTransactionResult executeEthTransaction(String recipientEthAddress, String ethAmount) {
+        String script = scriptPath + "/eth-transaction.js";
+
+        ProcessBuilder pb = new ProcessBuilder(
+                nodeCommand,
+                script,
+                ethServerUrl,
+                serviceEthAccountAddress,
+                serviceEthAccountPassword,
+                recipientEthAddress,
+                ethAmount
+        );
+        String output = executeAndCapture(pb);
+
+        return niceObjectMapper.readValue(output, EthTransactionResult.class);
     }
 
     private String executeAndCapture(ProcessBuilder processBuilder) {
