@@ -1,7 +1,9 @@
 package example.ark_smartbridge_listener.eth_bridge;
 
+import lombok.extern.log4j.Log4j;
 import org.springframework.stereotype.Service;
 
+@Log4j
 @Service
 public class ContractMessageViewMapper {
 
@@ -36,6 +38,9 @@ public class ContractMessageViewMapper {
         contractMessageView.setGasUsed(contractMessage.getGasUsed());
 
         contractMessageView.setCreatedAt(contractMessage.getCreatedAt().toString());
+
+        log.info("contract message: " + contractMessage.toString());
+        log.info("contract message view: " + contractMessageView.toString());
 
         return contractMessageView;
     }
