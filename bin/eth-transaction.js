@@ -27,13 +27,14 @@ let web3 = new Web3();
 web3.setProvider(new web3.providers.HttpProvider(ethServerUrl));
 
 // Unlock the sender's account
-web3.personal.unlockAccount(walletAddress, walletPassword);
+let account = web3.eth.accounts[0];
+web3.personal.unlockAccount(account, walletPassword);
 amount = web3.toWei(amount, "ether");
 
 // Send transaction
 let transaction = web3.eth.sendTransaction(
     {
-        from: walletAddress,
+        from: account,
         to: receiverAddress,
         value: amount
     },

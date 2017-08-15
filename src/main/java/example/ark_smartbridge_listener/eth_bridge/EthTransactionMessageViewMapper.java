@@ -1,5 +1,8 @@
 package example.ark_smartbridge_listener.eth_bridge;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public class EthTransactionMessageViewMapper {
 
     public EthTransactionMessageView map(EthTransactionMessage ethTransactionMessage) {
