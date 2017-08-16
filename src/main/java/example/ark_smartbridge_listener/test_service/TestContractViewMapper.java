@@ -14,6 +14,8 @@ public class TestContractViewMapper {
         ethTransactionMessageView.setServiceArkAddress(testContractEntity.getServiceArkAddress());
         ethTransactionMessageView.setReturnArkAddress(testContractEntity.getReturnArkAddress());
         ethTransactionMessageView.setDonationArkAmount(testContractEntity.getDonationArkAmount().toPlainString());
+        ethTransactionMessageView.setReturnArkAmount(testContractEntity.getReturnArkAmount().toPlainString());
+        ethTransactionMessageView.setReturnArkTransactionId(testContractEntity.getReturnArkTransactionId());
 
         return ethTransactionMessageView;
     }

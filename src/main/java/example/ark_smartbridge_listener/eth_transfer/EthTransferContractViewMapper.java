@@ -15,6 +15,7 @@ public class EthTransferContractViewMapper {
         ethTransferContractView.setServiceArkAddress(ethTransferContractEntity.getServiceArkAddress());
         ethTransferContractView.setRequiredArkAmount(ethTransferContractEntity.getRequiredArkAmount().toPlainString());
         ethTransferContractView.setReturnArkAddress(ethTransferContractEntity.getReturnArkAddress());
+        ethTransferContractView.setReturnArkAmount(ethTransferContractEntity.getReturnArkAmount().toPlainString());
         ethTransferContractView.setRecipientEthAddress(ethTransferContractEntity.getRecipientEthAddress());
         ethTransferContractView.setEthAmount(ethTransferContractEntity.getEthAmount().toPlainString());
 

@@ -11,4 +11,6 @@ public class TestContractView {
     private String serviceArkAddress;
     private String donationArkAmount;
     private String returnArkAddress;
+    private String returnArkAmount;
+    private String returnArkTransactionId;
 }

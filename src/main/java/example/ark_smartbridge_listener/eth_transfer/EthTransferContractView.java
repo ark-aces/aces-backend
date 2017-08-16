@@ -11,6 +11,7 @@ public class EthTransferContractView {
     private String serviceArkAddress;
     private String requiredArkAmount;
     private String returnArkAddress;
+    private String returnArkAmount;
     private String recipientEthAddress;
     private String arkPerEthExchangeRate;
     private String ethAmount;
