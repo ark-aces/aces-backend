@@ -6,17 +6,20 @@ import org.springframework.stereotype.Service;
 public class TestContractViewMapper {
 
     public TestContractView map(TestContractEntity testContractEntity) {
-        TestContractView ethTransactionMessageView = new TestContractView();
-        ethTransactionMessageView.setToken(testContractEntity.getToken());
-        ethTransactionMessageView.setCreatedAt(testContractEntity.getCreatedAt().toString());
-        ethTransactionMessageView.setStatus(testContractEntity.getStatus());
-        ethTransactionMessageView.setRequiredArkAmount(testContractEntity.getRequiredArkAmount().toPlainString());
-        ethTransactionMessageView.setServiceArkAddress(testContractEntity.getServiceArkAddress());
-        ethTransactionMessageView.setReturnArkAddress(testContractEntity.getReturnArkAddress());
-        ethTransactionMessageView.setDonationArkAmount(testContractEntity.getDonationArkAmount().toPlainString());
-        ethTransactionMessageView.setReturnArkAmount(testContractEntity.getReturnArkAmount().toPlainString());
-        ethTransactionMessageView.setReturnArkTransactionId(testContractEntity.getReturnArkTransactionId());
+        TestContractView testContractView = new TestContractView();
+        testContractView.setToken(testContractEntity.getToken());
+        testContractView.setCreatedAt(testContractEntity.getCreatedAt().toString());
+        testContractView.setStatus(testContractEntity.getStatus());
+        testContractView.setRequiredArkAmount(testContractEntity.getRequiredArkAmount().toPlainString());
+        testContractView.setServiceArkAddress(testContractEntity.getServiceArkAddress());
+        testContractView.setReturnArkAddress(testContractEntity.getReturnArkAddress());
+        testContractView.setDonationArkAmount(testContractEntity.getDonationArkAmount().toPlainString());
 
-        return ethTransactionMessageView;
+        if (testContractEntity.getReturnArkAmount() != null) {
+            testContractView.setReturnArkAmount(testContractEntity.getReturnArkAmount().toPlainString());
+        }
+        testContractView.setReturnArkTransactionId(testContractEntity.getReturnArkTransactionId());
+
+        return testContractView;
     }
 }

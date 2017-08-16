@@ -25,6 +25,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+@CrossOrigin
 @RestController
 @Transactional
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))

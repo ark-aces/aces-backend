@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +27,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+@CrossOrigin
 @RestController
 @Transactional
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
@@ -51,17 +53,20 @@ public class TestContractController {
     @PostMapping("/test-contracts")
     public TestContractView createContract(
             @RequestParam("returnArkAddress") String returnArkAddress,
-            @RequestParam("donationArkAmount") String donationArkAmountString
+            @RequestParam("donationArkAmount") String donationArkAmount
     ) {
-        BigDecimal donationArkAmount = new BigDecimal(donationArkAmountString);
+        BigDecimal donationArkAmountValue = new BigDecimal(donationArkAmount);
+
+        BigDecimal requiredArkAmount = donationArkAmountValue.add(arkTransactionFee);
 
         TestContractEntity testContractEntity = new TestContractEntity();
         testContractEntity.setToken(UUID.randomUUID().toString());
         testContractEntity.setCreatedAt(ZonedDateTime.from(Instant.now().atOffset(ZoneOffset.UTC)));
         testContractEntity.setStatus(TestContractEntity.STATUS_PENDING);
         testContractEntity.setServiceArkAddress(serviceArkAddress);
-        testContractEntity.setDonationArkAmount(donationArkAmount.setScale(8, BigDecimal.ROUND_UP));
+        testContractEntity.setDonationArkAmount(donationArkAmountValue.setScale(8, BigDecimal.ROUND_UP));
         testContractEntity.setReturnArkAddress(returnArkAddress);
+        testContractEntity.setRequiredArkAmount(requiredArkAmount);
         testContractRepository.save(testContractEntity);
 
         // Register contract message with listener so we get a callback when a matching ark transaction is found
