@@ -1,9 +1,9 @@
-package example.ark_smartbridge_listener.eth_bridge;
+package example.ark_smartbridge_listener.eth_contract_deploy;
 
 import lombok.Data;
 
 @Data
-public class ContractMessageView {
+public class EthContractDeployContractView {
 
     private String token;
     private String createdAt;

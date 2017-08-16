@@ -3,7 +3,6 @@ package example.ark_smartbridge_listener.test_service;
 import example.ark_smartbridge_listener.NotFoundException;
 import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
 import example.ark_smartbridge_listener.ark_listener.TransactionMatch;
-import example.ark_smartbridge_listener.eth_bridge.ContractMessage;
 import io.ark.ark_client.ArkClient;
 import io.ark.ark_client.Transaction;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +58,7 @@ public class TestContractController {
         TestContractEntity testContractEntity = new TestContractEntity();
         testContractEntity.setToken(UUID.randomUUID().toString());
         testContractEntity.setCreatedAt(ZonedDateTime.from(Instant.now().atOffset(ZoneOffset.UTC)));
-        testContractEntity.setStatus(ContractMessage.STATUS_PENDING);
+        testContractEntity.setStatus(TestContractEntity.STATUS_PENDING);
         testContractEntity.setServiceArkAddress(serviceArkAddress);
         testContractEntity.setDonationArkAmount(donationArkAmount.setScale(8, BigDecimal.ROUND_UP));
         testContractEntity.setReturnArkAddress(returnArkAddress);
@@ -87,7 +86,7 @@ public class TestContractController {
         TestContractEntity testContractEntity = getTestContractEntityOrThrowException(token);
 
         // Skip already processed transactions
-        if (! testContractEntity.getStatus().equals(ContractMessage.STATUS_PENDING)) {
+        if (! testContractEntity.getStatus().equals(TestContractEntity.STATUS_PENDING)) {
             return;
         }
 
@@ -103,10 +102,10 @@ public class TestContractController {
 
         // Ensure ark transaction contains enough ark to cover cost
         if (transactionArkAmount.compareTo(requiredArkAmount) >= 0) {
-            testContractEntity.setStatus(ContractMessage.STATUS_COMPLETED);
+            testContractEntity.setStatus(TestContractEntity.STATUS_COMPLETED);
         } else {
             // The ark transaction does not contain sufficient ark to process
-            testContractEntity.setStatus(ContractMessage.STATUS_REJECTED);
+            testContractEntity.setStatus(TestContractEntity.STATUS_REJECTED);
         }
 
         BigDecimal returnArkAmount = transactionArkAmount

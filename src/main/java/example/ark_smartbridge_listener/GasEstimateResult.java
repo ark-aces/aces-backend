@@ -1,4 +1,4 @@
-package example.ark_smartbridge_listener.eth_bridge;
+package example.ark_smartbridge_listener;
 
 import lombok.Data;
 

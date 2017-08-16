@@ -1,5 +1,6 @@
-package example.ark_smartbridge_listener.eth_bridge;
+package example.ark_smartbridge_listener.eth_contract_deploy;
 
+import example.ark_smartbridge_listener.ScriptExecutorService;
 import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
 import example.ark_smartbridge_listener.exchange_rate_service.ExchangeRateService;
 import io.ark.ark_client.ArkClient;
@@ -33,7 +34,7 @@ import java.util.UUID;
 @Transactional
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Slf4j
-public class ContractController {
+public class EthContractDeployController {
 
     // todo: get the current eth per gas rate from the network http://ethgasstation.info/
     private final BigDecimal ethPerGas = new BigDecimal("0.00000002");
@@ -42,8 +43,8 @@ public class ContractController {
 
     private final BigInteger satoshisPerArk = new BigInteger("100000000");
 
-    private final ContractMessageRepository contractMessageRepository;
-    private final ContractMessageViewMapper contractMessageViewMapper;
+    private final EthContractDeployContractRepository ethContractDeployContractRepository;
+    private final EthContractDeployContractViewMapper ethContractDeployContractViewMapper;
     private final String serviceArkAddress;
     private final ScriptExecutorService scriptExecutorService;
     private final ExchangeRateService exchangeRateService;
@@ -55,8 +56,8 @@ public class ContractController {
         .rootUri("http://localhost:8080/")
         .build();
 
-    @PostMapping("/contracts")
-    public ContractMessageView postContract(
+    @PostMapping("/eth-contract-deploy-contracts")
+    public EthContractDeployContractView postContract(
         @RequestParam("abiJson") MultipartFile abiJsonFile,
         @RequestParam("code") MultipartFile codeFile,
         @RequestParam("params") MultipartFile paramsFile,
@@ -82,49 +83,49 @@ public class ContractController {
         BigDecimal requiredArkCost = estimatedArkCost.multiply(new BigDecimal("2.0")) // require a 2x buffer
             .add(arkTransactionFee); // add transaction fee for return transaction
 
-        ContractMessage contractMessage = new ContractMessage();
-        contractMessage.setStatus(ContractMessage.STATUS_PENDING);
-        contractMessage.setToken(UUID.randomUUID().toString());
-        contractMessage.setContractCode(code);
-        contractMessage.setContractAbiJson(abiJson);
-        contractMessage.setContractParamsJson(paramsJson);
-        contractMessage.setGasLimit(gasLimit);
-        contractMessage.setArkPerEthExchangeRate(arkPerEthExchangeRate.setScale(8, BigDecimal.ROUND_UP));
-        contractMessage.setEstimatedGasCost(estimatedGasCost);
-        contractMessage.setEstimatedEthCost(estimatedEthCost.setScale(8, BigDecimal.ROUND_UP));
-        contractMessage.setRequiredArkCost(requiredArkCost.setScale(8, BigDecimal.ROUND_UP));
-        contractMessage.setCreatedAt(ZonedDateTime.from(Instant.now().atOffset(ZoneOffset.UTC)));
-        contractMessage.setServiceArkAddress(serviceArkAddress);
-        contractMessage.setReturnArkAddress(returnArkAddress);
-        contractMessageRepository.save(contractMessage);
+        EthContractDeployContractEntity ethContractDeployContractEntity = new EthContractDeployContractEntity();
+        ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_PENDING);
+        ethContractDeployContractEntity.setToken(UUID.randomUUID().toString());
+        ethContractDeployContractEntity.setContractCode(code);
+        ethContractDeployContractEntity.setContractAbiJson(abiJson);
+        ethContractDeployContractEntity.setContractParamsJson(paramsJson);
+        ethContractDeployContractEntity.setGasLimit(gasLimit);
+        ethContractDeployContractEntity.setArkPerEthExchangeRate(arkPerEthExchangeRate.setScale(8, BigDecimal.ROUND_UP));
+        ethContractDeployContractEntity.setEstimatedGasCost(estimatedGasCost);
+        ethContractDeployContractEntity.setEstimatedEthCost(estimatedEthCost.setScale(8, BigDecimal.ROUND_UP));
+        ethContractDeployContractEntity.setRequiredArkCost(requiredArkCost.setScale(8, BigDecimal.ROUND_UP));
+        ethContractDeployContractEntity.setCreatedAt(ZonedDateTime.from(Instant.now().atOffset(ZoneOffset.UTC)));
+        ethContractDeployContractEntity.setServiceArkAddress(serviceArkAddress);
+        ethContractDeployContractEntity.setReturnArkAddress(returnArkAddress);
+        ethContractDeployContractRepository.save(ethContractDeployContractEntity);
 
         // Register contract message with listener so we get a callback when a matching ark transaction is found
         CreateMessageRequest createMessageRequest = new CreateMessageRequest();
-        createMessageRequest.setCallbackUrl("http://localhost:8080/ark-transactions");
-        createMessageRequest.setToken(contractMessage.getToken());
+        createMessageRequest.setCallbackUrl("http://localhost:8080/eth-contract-deploy-contracts/ark-transactions");
+        createMessageRequest.setToken(ethContractDeployContractEntity.getToken());
         listenerRestTemplate.postForObject("/messages", createMessageRequest, Void.class);
 
-        return contractMessageViewMapper.map(contractMessage);
+        return ethContractDeployContractViewMapper.map(ethContractDeployContractEntity);
     }
 
-    @GetMapping("/contracts/{token}")
-    public ContractMessageView getContract(@PathVariable String token) {
-        ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
+    @GetMapping("/eth-contract-deploy-contracts/{token}")
+    public EthContractDeployContractView getContract(@PathVariable String token) {
+        EthContractDeployContractEntity ethContractDeployContractEntity = getContractMessageOrThrowNotFound(token);
 
-        return contractMessageViewMapper.map(contractMessage);
+        return ethContractDeployContractViewMapper.map(ethContractDeployContractEntity);
     }
 
-    @PostMapping("/ark-transactions")
+    @PostMapping("/eth-contract-deploy-contracts/ark-transactions")
     public void postArkTransactions(@RequestBody TransactionMatch transactionMatch) {
         String token = transactionMatch.getToken();
-        ContractMessage contractMessage = getContractMessageOrThrowNotFound(token);
+        EthContractDeployContractEntity ethContractDeployContractEntity = getContractMessageOrThrowNotFound(token);
 
         // Skip already processed transactions
-        if (! contractMessage.getStatus().equals(ContractMessage.STATUS_PENDING)) {
+        if (! ethContractDeployContractEntity.getStatus().equals(EthContractDeployContractEntity.STATUS_PENDING)) {
             return;
         }
 
-        String code = contractMessage.getContractCode();
+        String code = ethContractDeployContractEntity.getContractCode();
 
         Long estimatedGasCost = scriptExecutorService.executeEstimateGas(code).getGasEstimate();
         BigDecimal estimatedEthCost = ethPerGas.multiply(new BigDecimal(estimatedGasCost));
@@ -148,29 +149,29 @@ public class ContractController {
             // is not idempotent), we should handle the failure scenario in a better way
 
             // deploy eth contract corresponding to this ark transaction
-            ContractDeployResult contractDeployResult = scriptExecutorService.executeContractDeploy(
-                contractMessage.getContractAbiJson(),
-                contractMessage.getContractCode(),
-                contractMessage.getContractParamsJson(),
-                contractMessage.getGasLimit()
+            EthContractDeployResult ethContractDeployResult = scriptExecutorService.executeContractDeploy(
+                ethContractDeployContractEntity.getContractAbiJson(),
+                ethContractDeployContractEntity.getContractCode(),
+                ethContractDeployContractEntity.getContractParamsJson(),
+                ethContractDeployContractEntity.getGasLimit()
             );
-            contractMessage.setContractTransactionHash(contractDeployResult.getTransactionHash());
-            contractMessage.setContractAddress(contractDeployResult.getAddress());
-            contractMessage.setGasUsed(contractDeployResult.getGasUsed());
+            ethContractDeployContractEntity.setContractTransactionHash(ethContractDeployResult.getTransactionHash());
+            ethContractDeployContractEntity.setContractAddress(ethContractDeployResult.getAddress());
+            ethContractDeployContractEntity.setGasUsed(ethContractDeployResult.getGasUsed());
 
             // todo: need to figure out actual eth/ark costs and save to message
-            BigDecimal actualEthCost = ethPerGas.multiply(new BigDecimal(contractDeployResult.getGasUsed()));
+            BigDecimal actualEthCost = ethPerGas.multiply(new BigDecimal(ethContractDeployResult.getGasUsed()));
             BigDecimal actualArkCost = actualEthCost.multiply(arkPerEthExchangeRate);
-            contractMessage.setDeploymentArkCost(actualArkCost);
+            ethContractDeployContractEntity.setDeploymentArkCost(actualArkCost);
 
             deploymentArkSatoshiCost = actualArkCost.multiply(new BigDecimal(satoshisPerArk))
                 .toBigInteger()
                 .longValueExact();
 
-            contractMessage.setStatus(ContractMessage.STATUS_COMPLETED);
+            ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
         } else {
             // The ark transaction does not contain sufficient ark to process
-            contractMessage.setStatus(ContractMessage.STATUS_REJECTED);
+            ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_REJECTED);
         }
 
         // Subtract ark transaction fees from return amount
@@ -186,7 +187,7 @@ public class ContractController {
         BigDecimal returnArkAmount = new BigDecimal(returnSatoshiAmount)
             .setScale(14, BigDecimal.ROUND_UP)
             .divide(new BigDecimal(satoshisPerArk), BigDecimal.ROUND_UP);
-        contractMessage.setReturnArkAmount(returnArkAmount);
+        ethContractDeployContractEntity.setReturnArkAmount(returnArkAmount);
 
         if (returnSatoshiAmount > 0) {
             // todo: handle the case where an error occurs sending return ark.
@@ -194,23 +195,23 @@ public class ContractController {
             Long finalReturnSatoshiAmount = returnSatoshiAmount;
             String returnArkTransactionId = arkClientRetryTemplate.execute(retryContext ->
                 arkClient.createTransaction(
-                    contractMessage.getReturnArkAddress(),
+                    ethContractDeployContractEntity.getReturnArkAddress(),
                     finalReturnSatoshiAmount,
-                    contractMessage.getToken(),
+                    ethContractDeployContractEntity.getToken(),
                     serviceArkPassphrase
                 ));
 
-            contractMessage.setReturnArkTransactionId(returnArkTransactionId);
+            ethContractDeployContractEntity.setReturnArkTransactionId(returnArkTransactionId);
         }
 
-        contractMessageRepository.save(contractMessage);
+        ethContractDeployContractRepository.save(ethContractDeployContractEntity);
     }
 
-    private ContractMessage getContractMessageOrThrowNotFound(String token) {
-        ContractMessage contractMessage = contractMessageRepository.findOneByToken(token);
-        if (contractMessage == null) {
+    private EthContractDeployContractEntity getContractMessageOrThrowNotFound(String token) {
+        EthContractDeployContractEntity ethContractDeployContractEntity = ethContractDeployContractRepository.findOneByToken(token);
+        if (ethContractDeployContractEntity == null) {
             throw new NotFoundException("Contract not found");
         }
-        return contractMessage;
+        return ethContractDeployContractEntity;
     }
 }

@@ -1,4 +1,4 @@
-package example.ark_smartbridge_listener.eth_bridge;
+package example.ark_smartbridge_listener.eth_contract_deploy;
 
 import lombok.Data;
 
@@ -11,7 +11,7 @@ import java.time.ZonedDateTime;
 
 @Data
 @Entity
-public class ContractMessage {
+public class EthContractDeployContractEntity {
 
     /**
      * Contract is waiting for Ark Transaction to be found

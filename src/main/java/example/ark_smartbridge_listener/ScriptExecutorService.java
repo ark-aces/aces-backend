@@ -1,5 +1,6 @@
-package example.ark_smartbridge_listener.eth_bridge;
+package example.ark_smartbridge_listener;
 
+import example.ark_smartbridge_listener.eth_contract_deploy.EthContractDeployResult;
 import io.ark.ark_client.EthTransactionResult;
 import lib.NiceObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ public class ScriptExecutorService {
         return niceObjectMapper.readValue(output, GasEstimateResult.class);
     }
 
-    public ContractDeployResult executeContractDeploy(String abiJson, String code, String paramsJson, Long gasLimit) {
+    public EthContractDeployResult executeContractDeploy(String abiJson, String code, String paramsJson, Long gasLimit) {
         String script = scriptPath + "/deploy-contract.js";
 
         ProcessBuilder pb = new ProcessBuilder(
@@ -49,7 +50,7 @@ public class ScriptExecutorService {
         );
         String output = executeAndCapture(pb);
 
-        return niceObjectMapper.readValue(output, ContractDeployResult.class);
+        return niceObjectMapper.readValue(output, EthContractDeployResult.class);
     }
 
     public EthTransactionResult executeEthTransaction(String recipientEthAddress, String ethAmount) {
