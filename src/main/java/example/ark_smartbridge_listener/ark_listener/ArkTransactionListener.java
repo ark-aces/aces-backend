@@ -31,7 +31,6 @@ public class ArkTransactionListener {
             // todo: review this scanning so that we don't miss any transactions
             Integer limit = 50;
             for (Integer offset = 0; offset < scanDepthTransactions; offset += limit) {
-                log.info("Scanning transactions with offset = " + offset);
                 arkClient.getTransactions(offset).stream()
                     .forEach(transaction -> {
                         // Skip transaction with empty vendorField
@@ -39,7 +38,6 @@ public class ArkTransactionListener {
                             return;
                         }
 
-                        log.info("Found ark transaction with vendor field: " + transaction.getVendorField());
                         Message message = messageRepository.findOneByToken(transaction.getVendorField());
                         if (message != null) {
                             log.info("Matched transaction with message token: " + message.getToken());
