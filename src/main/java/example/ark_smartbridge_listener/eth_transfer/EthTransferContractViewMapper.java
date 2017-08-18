@@ -20,6 +20,7 @@ public class EthTransferContractViewMapper {
         }
         ethTransferContractView.setRecipientEthAddress(ethTransferContractEntity.getRecipientEthAddress());
         ethTransferContractView.setEthAmount(ethTransferContractEntity.getEthAmount().toPlainString());
+        ethTransferContractView.setEthTransactionHash(ethTransferContractEntity.getEthTransactionHash());
 
         return ethTransferContractView;
     }
