@@ -48,7 +48,7 @@ public class EthTransferController {
             .rootUri("http://localhost:8080/")
             .build();
 
-    @PostMapping("/eth-transfers")
+    @PostMapping("/eth-transfer-contracts")
     public EthTransferContractView createEthTransaction(
             @RequestParam("returnArkAddress") String returnArkAddress,
             @RequestParam("recipientEthAddress") String recipientEthAddress,
@@ -75,21 +75,21 @@ public class EthTransferController {
 
         // Register contract message with listener so we get a callback when a matching ark transaction is found
         CreateMessageRequest createMessageRequest = new CreateMessageRequest();
-        createMessageRequest.setCallbackUrl("http://localhost:8080/eth-transfers/ark-transaction-matches");
+        createMessageRequest.setCallbackUrl("http://localhost:8080/eth-transfer-contracts/ark-transaction-matches");
         createMessageRequest.setToken(entity.getToken());
         listenerRestTemplate.postForObject("/messages", createMessageRequest, Void.class);
 
         return ethTransferContractViewMapper.map(entity);
     }
 
-    @GetMapping("/eth-transfers/{token}")
+    @GetMapping("/eth-transfer-contracts/{token}")
     public EthTransferContractView getTransaction(@PathVariable String token) {
         EthTransferContractEntity ethTransferContractEntity = getEthTransferContractOrThrowException(token);
 
         return ethTransferContractViewMapper.map(ethTransferContractEntity);
     }
 
-    @PostMapping("/eth-transfers/ark-transaction-matches")
+    @PostMapping("/eth-transfer-contracts/ark-transaction-matches")
     public void postArkTransactionMatches(@RequestBody TransactionMatch transactionMatch) {
         String token = transactionMatch.getToken();
         EthTransferContractEntity ethTransferContractEntity = getEthTransferContractOrThrowException(token);
