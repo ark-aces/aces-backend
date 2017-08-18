@@ -71,7 +71,7 @@ public class TestContractController {
 
         // Register contract message with listener so we get a callback when a matching ark transaction is found
         CreateMessageRequest createMessageRequest = new CreateMessageRequest();
-        createMessageRequest.setCallbackUrl("http://localhost:8080/test-contracts/ark-transactions-matches");
+        createMessageRequest.setCallbackUrl("http://localhost:8080/test-contracts/ark-transaction-matches");
         createMessageRequest.setToken(testContractEntity.getToken());
         listenerRestTemplate.postForObject("/messages", createMessageRequest, Void.class);
 
