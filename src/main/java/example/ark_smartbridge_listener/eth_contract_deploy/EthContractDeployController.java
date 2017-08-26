@@ -151,18 +151,29 @@ public class EthContractDeployController {
             // is not idempotent), we should handle the failure scenario in a better way
 
             // deploy eth contract corresponding to this ark transaction
-            EthContractDeployResult ethContractDeployResult = scriptExecutorService.executeContractDeploy(
-                ethContractDeployContractEntity.getContractAbiJson(),
-                ethContractDeployContractEntity.getContractCode(),
-                ethContractDeployContractEntity.getContractParamsJson(),
-                ethContractDeployContractEntity.getGasLimit()
-            );
-            ethContractDeployContractEntity.setContractTransactionHash(ethContractDeployResult.getTransactionHash());
-            ethContractDeployContractEntity.setContractAddress(ethContractDeployResult.getAddress());
-            ethContractDeployContractEntity.setGasUsed(ethContractDeployResult.getGasUsed());
+            EthContractDeployResult ethContractDeployResult;
+            BigDecimal actualEthCost = BigDecimal.ZERO;
+            try {
+                ethContractDeployResult = scriptExecutorService.executeContractDeploy(
+                    ethContractDeployContractEntity.getContractAbiJson(),
+                    ethContractDeployContractEntity.getContractCode(),
+                    ethContractDeployContractEntity.getContractParamsJson(),
+                    ethContractDeployContractEntity.getGasLimit()
+                );
+                ethContractDeployContractEntity.setContractTransactionHash(ethContractDeployResult.getTransactionHash());
+                ethContractDeployContractEntity.setContractAddress(ethContractDeployResult.getAddress());
+                ethContractDeployContractEntity.setGasUsed(ethContractDeployResult.getGasUsed());
+
+                actualEthCost = ethPerGas.multiply(new BigDecimal(ethContractDeployResult.getGasUsed()));
+
+                ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
+            }
+            catch (Exception e) {
+                log.error("Failed to execute deploy script", e);
+                ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_FAILED);
+            }
 
             // todo: need to figure out actual eth/ark costs and save to message
-            BigDecimal actualEthCost = ethPerGas.multiply(new BigDecimal(ethContractDeployResult.getGasUsed()));
             BigDecimal actualArkCost = actualEthCost.multiply(arkPerEthExchangeRate);
             ethContractDeployContractEntity.setDeploymentArkCost(actualArkCost);
 
@@ -170,40 +181,47 @@ public class EthContractDeployController {
                 .toBigInteger()
                 .longValueExact();
 
-            ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
+            // Subtract ark transaction fees from return amount
+            Long arkTransactionFeeSatoshis = arkTransactionFee
+                .multiply(new BigDecimal(satoshisPerArk))
+                .toBigIntegerExact().longValue();
+
+            Long returnSatoshiAmount = transaction.getAmount() - deploymentArkSatoshiCost - arkTransactionFeeSatoshis;
+            if (returnSatoshiAmount < 0) {
+                returnSatoshiAmount = 0L;
+            }
+
+            BigDecimal returnArkAmount = new BigDecimal(returnSatoshiAmount)
+                .setScale(14, BigDecimal.ROUND_UP)
+                .divide(new BigDecimal(satoshisPerArk), BigDecimal.ROUND_UP);
+            ethContractDeployContractEntity.setReturnArkAmount(returnArkAmount);
+
+            if (returnSatoshiAmount > 0) {
+                // todo: handle the case where an error occurs sending return ark.
+                // Create return ark transaction with remaining ark
+                Long finalReturnSatoshiAmount = returnSatoshiAmount;
+                String returnArkTransactionId;
+                try {
+                    returnArkTransactionId = arkClientRetryTemplate.execute(retryContext ->
+                        arkClient.createTransaction(
+                            ethContractDeployContractEntity.getReturnArkAddress(),
+                            finalReturnSatoshiAmount,
+                            ethContractDeployContractEntity.getToken(),
+                            serviceArkPassphrase
+                        ));
+
+                    ethContractDeployContractEntity.setReturnArkTransactionId(returnArkTransactionId);
+                }
+                catch (Exception e) {
+                    log.error("Failed to send return ark transaction", e);
+                    ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_FAILED);
+                }
+
+            }
+
         } else {
             // The ark transaction does not contain sufficient ark to process
             ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_REJECTED);
-        }
-
-        // Subtract ark transaction fees from return amount
-        Long arkTransactionFeeSatoshis = arkTransactionFee
-            .multiply(new BigDecimal(satoshisPerArk))
-            .toBigIntegerExact().longValue();
-
-        Long returnSatoshiAmount = transaction.getAmount() - deploymentArkSatoshiCost - arkTransactionFeeSatoshis;
-        if (returnSatoshiAmount < 0) {
-            returnSatoshiAmount = 0L;
-        }
-
-        BigDecimal returnArkAmount = new BigDecimal(returnSatoshiAmount)
-            .setScale(14, BigDecimal.ROUND_UP)
-            .divide(new BigDecimal(satoshisPerArk), BigDecimal.ROUND_UP);
-        ethContractDeployContractEntity.setReturnArkAmount(returnArkAmount);
-
-        if (returnSatoshiAmount > 0) {
-            // todo: handle the case where an error occurs sending return ark.
-            // Create return ark transaction with remaining ark
-            Long finalReturnSatoshiAmount = returnSatoshiAmount;
-            String returnArkTransactionId = arkClientRetryTemplate.execute(retryContext ->
-                arkClient.createTransaction(
-                    ethContractDeployContractEntity.getReturnArkAddress(),
-                    finalReturnSatoshiAmount,
-                    ethContractDeployContractEntity.getToken(),
-                    serviceArkPassphrase
-                ));
-
-            ethContractDeployContractEntity.setReturnArkTransactionId(returnArkTransactionId);
         }
 
         ethContractDeployContractRepository.save(ethContractDeployContractEntity);
