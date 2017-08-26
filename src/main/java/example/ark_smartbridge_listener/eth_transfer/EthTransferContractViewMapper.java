@@ -18,6 +18,7 @@ public class EthTransferContractViewMapper {
         if (ethTransferContractEntity.getReturnArkAmount() != null) {
             ethTransferContractView.setReturnArkAmount(ethTransferContractEntity.getReturnArkAmount().toPlainString());
         }
+        ethTransferContractView.setReturnArkTransactionId(ethTransferContractEntity.getReturnArkTransactionId());
         ethTransferContractView.setRecipientEthAddress(ethTransferContractEntity.getRecipientEthAddress());
         ethTransferContractView.setEthAmount(ethTransferContractEntity.getEthAmount().toPlainString());
         ethTransferContractView.setEthTransactionHash(ethTransferContractEntity.getEthTransactionHash());
