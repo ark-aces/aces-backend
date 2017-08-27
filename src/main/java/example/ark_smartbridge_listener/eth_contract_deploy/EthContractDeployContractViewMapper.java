@@ -16,6 +16,10 @@ public class EthContractDeployContractViewMapper {
         view.setEstimatedGasCost(entity.getEstimatedGasCost());
         view.setEstimatedEthCost(entity.getEstimatedEthCost().toPlainString());
         view.setArkPerEthExchangeRate(entity.getArkPerEthExchangeRate().toPlainString());
+
+        view.setArkFlatFee(entity.getArkFlatFee().toPlainString());
+        view.setArkFeePercent(entity.getArkFeePercent().toPlainString());
+        view.setArkFeeTotal(entity.getArkFeeTotal().toPlainString());
         view.setRequiredArkCost(entity.getRequiredArkCost().toPlainString());
         view.setReturnArkAddress(entity.getReturnArkAddress());
         view.setReturnArkTransactionId(entity.getReturnArkTransactionId());

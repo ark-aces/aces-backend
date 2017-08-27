@@ -60,7 +60,7 @@ the original amount less transaction fees.
     This app also requires Ethereum RPC server to be running on `localhost:8545`:
     
     ```
-    geth --dev --rpc --rpcapi 'web3,eth,debug' --rpccorsdomain="*"
+    geth --dev --rpc --rpcapi 'web3,eth,debug,personal' --rpccorsdomain="*"
     ```
     
     You can find server configurations in [application.yml](src/main/resources/application.yml)

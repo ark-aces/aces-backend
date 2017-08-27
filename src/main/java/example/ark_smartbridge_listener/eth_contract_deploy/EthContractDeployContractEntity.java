@@ -61,6 +61,15 @@ public class EthContractDeployContractEntity {
     private BigDecimal estimatedEthCost;
 
     @Column(precision = 20, scale = 8)
+    private BigDecimal arkFlatFee;
+
+    @Column(precision = 20, scale = 8)
+    private BigDecimal arkFeePercent;
+
+    @Column(precision = 20, scale = 8)
+    private BigDecimal arkFeeTotal;
+
+    @Column(precision = 20, scale = 8)
     private BigDecimal requiredArkCost;
 
     private String serviceArkAddress;

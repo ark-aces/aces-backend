@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "arkjs": "^0.2.0",
     "web3": "^0.19.1"
   }
 }

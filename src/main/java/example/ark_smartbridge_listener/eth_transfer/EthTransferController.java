@@ -1,7 +1,10 @@
 package example.ark_smartbridge_listener.eth_transfer;
 
+import example.ark_smartbridge_listener.EthBalanceScriptExecutor;
+import example.ark_smartbridge_listener.GetBalanceResult;
 import example.ark_smartbridge_listener.NotFoundException;
 import example.ark_smartbridge_listener.ScriptExecutorService;
+import example.ark_smartbridge_listener.ServiceInfoView;
 import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
 import example.ark_smartbridge_listener.ark_listener.TransactionMatch;
 import example.ark_smartbridge_listener.eth_contract_deploy.EthContractDeployContractEntity;
@@ -32,6 +35,8 @@ import java.util.UUID;
 @Slf4j
 public class EthTransferController {
 
+    private final BigDecimal arkFlatFee = new BigDecimal("1.0000000");
+    private final BigDecimal arkFeePercent = new BigDecimal("2.25");
     private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
     private final BigInteger satoshisPerArk = new BigInteger("100000000");
 
@@ -43,10 +48,24 @@ public class EthTransferController {
     private final ArkClient arkClient;
     private final String serviceArkPassphrase;
     private final RetryTemplate arkClientRetryTemplate;
+    private final EthBalanceScriptExecutor ethBalanceScriptExecutor;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
             .rootUri("http://localhost:8080/")
             .build();
+
+    @GetMapping("/eth-transfer-service-info")
+    public ServiceInfoView getServiceInfo() {
+        GetBalanceResult getBalanceResult = ethBalanceScriptExecutor.execute();
+
+        ServiceInfoView serviceInfoView = new ServiceInfoView();
+        serviceInfoView.setCapacity(getBalanceResult.getBalance().toPlainString());
+        serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString());
+        serviceInfoView.setPercentFee(arkFeePercent.toPlainString());
+        serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
+
+        return serviceInfoView;
+    }
 
     @PostMapping("/eth-transfer-contracts")
     public EthTransferContractView createEthTransaction(
@@ -58,14 +77,19 @@ public class EthTransferController {
 
         // todo: we should sanity check the exchange rate to prevent a bad rate being used
         BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
-        BigDecimal requiredArkCost = ethAmount.multiply(arkPerEthExchangeRate)
+        BigDecimal baseArkCost = ethAmount.multiply(arkPerEthExchangeRate)
                 .add(arkTransactionFee); // add transaction fee for return transaction
+        BigDecimal requiredArkCost = baseArkCost
+            .add(baseArkCost.multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP)))
+            .add(arkFlatFee);
 
         EthTransferContractEntity entity = new EthTransferContractEntity();
         entity.setToken(UUID.randomUUID().toString());
         entity.setCreatedAt(ZonedDateTime.from(Instant.now().atOffset(ZoneOffset.UTC)));
         entity.setStatus(EthTransferContractEntity.STATUS_PENDING);
         entity.setServiceArkAddress(serviceArkAddress);
+        entity.setArkFlatFee(arkFlatFee);
+        entity.setArkFeePercent(arkFeePercent);
         entity.setRequiredArkAmount(requiredArkCost.setScale(8, BigDecimal.ROUND_UP));
         entity.setReturnArkAddress(returnArkAddress);
         entity.setRecipientEthAddress(recipientEthAddress);
@@ -146,7 +170,12 @@ public class EthTransferController {
                 .multiply(new BigDecimal(satoshisPerArk))
                 .toBigIntegerExact().longValue();
 
-        Long returnSatoshiAmount = transaction.getAmount() - deploymentArkSatoshiCost - arkTransactionFeeSatoshis;
+        Long feeSatoshis = ethTransferContractEntity.getArkFeeTotal()
+            .multiply(new BigDecimal(satoshisPerArk))
+            .toBigIntegerExact().longValue();
+
+        Long returnSatoshiAmount = transaction.getAmount() - deploymentArkSatoshiCost - arkTransactionFeeSatoshis
+            - feeSatoshis;
         if (returnSatoshiAmount < 0) {
             returnSatoshiAmount = 0L;
         }

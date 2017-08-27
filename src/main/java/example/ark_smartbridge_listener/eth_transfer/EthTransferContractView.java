@@ -9,6 +9,9 @@ public class EthTransferContractView {
     private String createdAt;
     private String status;
     private String serviceArkAddress;
+    private String arkFlatFee;
+    private String arkFeePercent;
+    private String arkFeeTotal;
     private String requiredArkAmount;
     private String returnArkAddress;
     private String returnArkAmount;

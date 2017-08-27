@@ -17,6 +17,9 @@ public class EthContractDeployContractView {
 
     private String returnArkAddress;
     private String deploymentArkCost;
+    private String arkFlatFee;
+    private String arkFeePercent;
+    private String arkFeeTotal;
     private String returnArkAmount;
     private String returnArkTransactionId;
 

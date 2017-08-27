@@ -1,6 +1,7 @@
 package example.ark_smartbridge_listener.test_service;
 
 import example.ark_smartbridge_listener.NotFoundException;
+import example.ark_smartbridge_listener.ServiceInfoView;
 import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
 import example.ark_smartbridge_listener.ark_listener.TransactionMatch;
 import io.ark.ark_client.ArkClient;
@@ -49,6 +50,16 @@ public class TestContractController {
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
             .rootUri("http://localhost:8080/")
             .build();
+
+    @GetMapping("/test-service-info")
+    public ServiceInfoView getServiceInfo() {
+        ServiceInfoView serviceInfoView = new ServiceInfoView();
+        serviceInfoView.setCapacity("∞");
+        serviceInfoView.setFlatFeeArk("0");
+        serviceInfoView.setPercentFee("0");
+        serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
+        return serviceInfoView;
+    }
 
     @PostMapping("/test-contracts")
     public TestContractView createContract(
