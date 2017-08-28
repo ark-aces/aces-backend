@@ -71,7 +71,7 @@ public class EthContractDeployController {
 
         ServiceInfoView serviceInfoView = new ServiceInfoView();
         serviceInfoView.setCapacity(getBalanceResult.getBalance().toPlainString() + " Eth");
-        serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString() + " Ark");
+        serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString());
         serviceInfoView.setPercentFee(arkFeePercent.toPlainString());
         serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
 

@@ -55,7 +55,7 @@ public class TestContractController {
     public ServiceInfoView getServiceInfo() {
         ServiceInfoView serviceInfoView = new ServiceInfoView();
         serviceInfoView.setCapacity("∞");
-        serviceInfoView.setFlatFeeArk("0 Ark");
+        serviceInfoView.setFlatFeeArk("0");
         serviceInfoView.setPercentFee("0");
         serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
         return serviceInfoView;
