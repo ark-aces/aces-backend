@@ -41,7 +41,7 @@ import java.util.UUID;
 @Slf4j
 public class EthContractDeployController {
 
-    private final BigDecimal arkFlatFee = new BigDecimal("1.0000000");
+    private final BigDecimal arkFlatFee = new BigDecimal("2.0000000");
     private final BigDecimal arkFeePercent = new BigDecimal("2.25");
 
     // todo: get the current eth per gas rate from the network http://ethgasstation.info/

@@ -36,7 +36,7 @@ import java.util.UUID;
 public class EthTransferController {
 
     private final BigDecimal arkFlatFee = new BigDecimal("1.0000000");
-    private final BigDecimal arkFeePercent = new BigDecimal("2.25");
+    private final BigDecimal arkFeePercent = new BigDecimal("1.25");
     private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
     private final BigInteger satoshisPerArk = new BigInteger("100000000");
 
