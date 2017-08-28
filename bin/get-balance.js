@@ -26,10 +26,10 @@ var web3 = new Web3();
 web3.setProvider(new web3.providers.HttpProvider(ethServerUrl));
 
 var balance = 0;
-for (var i = 0; i < eth.accounts.length; i++) {
-    var account = eth.accounts[i];
+for (var i = 0; i < web3.eth.accounts.length; i++) {
+    var account = web3.eth.accounts[i];
     if (account.getAddress() === walletAddress) {
-        balance = web3.fromWei(eth.getBalance(account), "ether");
+        balance = web3.fromWei(web3.eth.getBalance(account), "ether");
     }
 }
 console.log(JSON.stringify({
