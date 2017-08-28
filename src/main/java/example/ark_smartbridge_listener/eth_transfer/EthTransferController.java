@@ -79,9 +79,9 @@ public class EthTransferController {
         BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
         BigDecimal baseArkCost = ethAmount.multiply(arkPerEthExchangeRate)
                 .add(arkTransactionFee); // add transaction fee for return transaction
-        BigDecimal requiredArkCost = baseArkCost
-            .add(baseArkCost.multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP)))
+        BigDecimal arkFeeTotal = baseArkCost.multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP))
             .add(arkFlatFee);
+        BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
 
         EthTransferContractEntity entity = new EthTransferContractEntity();
         entity.setToken(UUID.randomUUID().toString());
@@ -90,6 +90,7 @@ public class EthTransferController {
         entity.setServiceArkAddress(serviceArkAddress);
         entity.setArkFlatFee(arkFlatFee);
         entity.setArkFeePercent(arkFeePercent);
+        entity.setArkFeeTotal(arkFeeTotal);
         entity.setRequiredArkAmount(requiredArkCost.setScale(8, BigDecimal.ROUND_UP));
         entity.setReturnArkAddress(returnArkAddress);
         entity.setRecipientEthAddress(recipientEthAddress);
