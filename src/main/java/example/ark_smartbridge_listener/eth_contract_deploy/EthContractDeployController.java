@@ -163,8 +163,7 @@ public class EthContractDeployController {
 
         BigDecimal baseArkCost = estimatedArkCost.multiply(new BigDecimal("2.0")) // require a 2x buffer
             .add(arkTransactionFee);
-        BigDecimal arkFeeTotal = baseArkCost
-            .add(baseArkCost.multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP)))
+        BigDecimal arkFeeTotal = baseArkCost.multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP))
             .add(arkFlatFee);
         BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
 
