@@ -28,7 +28,7 @@ web3.setProvider(new web3.providers.HttpProvider(ethServerUrl));
 var balance = 0;
 for (var i = 0; i < web3.eth.accounts.length; i++) {
     var account = web3.eth.accounts[i];
-    if (account.getAddress() === walletAddress) {
+    if (account === walletAddress) {
         balance = web3.fromWei(web3.eth.getBalance(account), "ether");
     }
 }
