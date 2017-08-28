@@ -70,8 +70,8 @@ public class EthContractDeployController {
         GetBalanceResult getBalanceResult = ethBalanceScriptExecutor.execute();
 
         ServiceInfoView serviceInfoView = new ServiceInfoView();
-        serviceInfoView.setCapacity(getBalanceResult.getBalance().toPlainString() + " ETH");
-        serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString());
+        serviceInfoView.setCapacity(getBalanceResult.getBalance().toPlainString() + " Eth");
+        serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString() + " Ark");
         serviceInfoView.setPercentFee(arkFeePercent.toPlainString());
         serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
 
