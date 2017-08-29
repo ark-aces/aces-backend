@@ -43,7 +43,6 @@ public class ArkTransactionListener {
                             // We got a match! Send it to the corresponding message listener
                             TransactionMatch transactionMatch = new TransactionMatch(transaction.getId(), message.getToken());
                             try {
-                                log.info("Posting to message to callback url " + message.getCallbackUrl() + ": " + message);
                                 callbackRestTemplate.postForEntity(message.getCallbackUrl(), transactionMatch, Void.class);
                             } catch (RestClientResponseException e) {
                                 log.error("Failed to post to callback url: " + message.getCallbackUrl(), e);

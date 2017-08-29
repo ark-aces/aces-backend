@@ -205,60 +205,61 @@ public class EthContractDeployController {
                 actualEthCost = ethPerGas.multiply(new BigDecimal(ethContractDeployContractEntity.getGasLimit()));
 
                 ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
+
+                // todo: need to figure out actual eth/ark costs and save to message
+                BigDecimal actualArkCost = actualEthCost.multiply(arkPerEthExchangeRate);
+                ethContractDeployContractEntity.setDeploymentArkCost(actualArkCost);
+
+                deploymentArkSatoshiCost = actualArkCost.multiply(new BigDecimal(satoshisPerArk))
+                    .toBigInteger()
+                    .longValueExact();
+
+                // Subtract ark transaction fees from return amount
+                Long arkTransactionFeeSatoshis = arkTransactionFee
+                    .multiply(new BigDecimal(satoshisPerArk))
+                    .toBigIntegerExact().longValue();
+
+                Long feeSatoshis = arkFeeTotal.multiply(new BigDecimal(satoshisPerArk))
+                    .toBigInteger()
+                    .longValueExact();
+
+                Long returnSatoshiAmount = transaction.getAmount() - deploymentArkSatoshiCost - arkTransactionFeeSatoshis
+                    - feeSatoshis;
+                if (returnSatoshiAmount < 0) {
+                    returnSatoshiAmount = 0L;
+                }
+
+                BigDecimal returnArkAmount = new BigDecimal(returnSatoshiAmount)
+                    .setScale(14, BigDecimal.ROUND_UP)
+                    .divide(new BigDecimal(satoshisPerArk), BigDecimal.ROUND_UP);
+                ethContractDeployContractEntity.setReturnArkAmount(returnArkAmount);
+
+                if (returnSatoshiAmount > 0) {
+                    // todo: handle the case where an error occurs sending return ark.
+                    // Create return ark transaction with remaining ark
+                    Long finalReturnSatoshiAmount = returnSatoshiAmount;
+                    String returnArkTransactionId;
+                    try {
+                        returnArkTransactionId = arkClientRetryTemplate.execute(retryContext ->
+                            arkClient.createTransaction(
+                                ethContractDeployContractEntity.getReturnArkAddress(),
+                                finalReturnSatoshiAmount,
+                                ethContractDeployContractEntity.getToken(),
+                                serviceArkPassphrase
+                            ));
+
+                        ethContractDeployContractEntity.setReturnArkTransactionId(returnArkTransactionId);
+                    }
+                    catch (Exception e) {
+                        log.error("Failed to send return ark transaction", e);
+                        ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_FAILED);
+                    }
+
+                }
             }
             catch (Exception e) {
                 log.error("Failed to execute deploy script", e);
                 ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_FAILED);
-            }
-
-            // todo: need to figure out actual eth/ark costs and save to message
-            BigDecimal actualArkCost = actualEthCost.multiply(arkPerEthExchangeRate);
-            ethContractDeployContractEntity.setDeploymentArkCost(actualArkCost);
-
-            deploymentArkSatoshiCost = actualArkCost.multiply(new BigDecimal(satoshisPerArk))
-                .toBigInteger()
-                .longValueExact();
-
-            // Subtract ark transaction fees from return amount
-            Long arkTransactionFeeSatoshis = arkTransactionFee
-                .multiply(new BigDecimal(satoshisPerArk))
-                .toBigIntegerExact().longValue();
-
-            Long feeSatoshis = arkFeeTotal.multiply(new BigDecimal(satoshisPerArk))
-                .toBigIntegerExact().longValue();
-
-            Long returnSatoshiAmount = transaction.getAmount() - deploymentArkSatoshiCost - arkTransactionFeeSatoshis
-                - feeSatoshis;
-            if (returnSatoshiAmount < 0) {
-                returnSatoshiAmount = 0L;
-            }
-
-            BigDecimal returnArkAmount = new BigDecimal(returnSatoshiAmount)
-                .setScale(14, BigDecimal.ROUND_UP)
-                .divide(new BigDecimal(satoshisPerArk), BigDecimal.ROUND_UP);
-            ethContractDeployContractEntity.setReturnArkAmount(returnArkAmount);
-
-            if (returnSatoshiAmount > 0) {
-                // todo: handle the case where an error occurs sending return ark.
-                // Create return ark transaction with remaining ark
-                Long finalReturnSatoshiAmount = returnSatoshiAmount;
-                String returnArkTransactionId;
-                try {
-                    returnArkTransactionId = arkClientRetryTemplate.execute(retryContext ->
-                        arkClient.createTransaction(
-                            ethContractDeployContractEntity.getReturnArkAddress(),
-                            finalReturnSatoshiAmount,
-                            ethContractDeployContractEntity.getToken(),
-                            serviceArkPassphrase
-                        ));
-
-                    ethContractDeployContractEntity.setReturnArkTransactionId(returnArkTransactionId);
-                }
-                catch (Exception e) {
-                    log.error("Failed to send return ark transaction", e);
-                    ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_FAILED);
-                }
-
             }
 
         } else {
