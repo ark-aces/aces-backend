@@ -163,7 +163,7 @@ public class EthContractDeployController {
         BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
         BigDecimal estimatedArkCost = estimatedEthCost.multiply(arkPerEthExchangeRate);
 
-        BigDecimal baseArkCost = estimatedArkCost.multiply(new BigDecimal("2.0")) // require a 2x buffer
+        BigDecimal baseArkCost = estimatedArkCost
             .add(arkTransactionFee);
         BigDecimal arkFeeTotal = baseArkCost.multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP))
             .add(arkFlatFee);
