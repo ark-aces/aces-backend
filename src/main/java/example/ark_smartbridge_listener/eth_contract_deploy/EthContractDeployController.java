@@ -44,6 +44,10 @@ public class EthContractDeployController {
     private final BigDecimal arkFlatFee = new BigDecimal("2.0000000");
     private final BigDecimal arkFeePercent = new BigDecimal("2.25");
 
+    // rate adjustment for testnet deployments, should be 1 for real eth (rate is divided by this value)
+    // todo: external value into config file
+    private final BigDecimal arkPerEthAdjustment = new BigDecimal("100");
+
     // todo: get the current eth per gas rate from the network http://ethgasstation.info/
     private final BigDecimal ethPerGas = new BigDecimal("0.00000002");
 
@@ -102,7 +106,9 @@ public class EthContractDeployController {
 
         BigDecimal estimatedEthCost = ethPerGas.multiply(new BigDecimal(estimatedGasCost));
         // todo: we should sanity check the exchange rate to prevent a bad rate being used
-        BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+        BigDecimal realArkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+        BigDecimal arkPerEthExchangeRate = realArkPerEthExchangeRate
+            .divide(arkPerEthAdjustment, BigDecimal.ROUND_HALF_UP);
         BigDecimal estimatedArkCost = estimatedEthCost.multiply(arkPerEthExchangeRate);
         BigDecimal baseArkCost = estimatedArkCost.multiply(new BigDecimal("2.0")) // require a 2x buffer
             .add(arkTransactionFee);
@@ -162,7 +168,9 @@ public class EthContractDeployController {
         Long estimatedGasCost = scriptExecutorService.executeEstimateGas(code).getGasEstimate();
         BigDecimal estimatedEthCost = ethPerGas.multiply(new BigDecimal(estimatedGasCost));
         // todo: we should sanity check the exchange rate to prevent a bad rate being used
-        BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+        BigDecimal realArkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+        BigDecimal arkPerEthExchangeRate = realArkPerEthExchangeRate
+            .divide(arkPerEthAdjustment, BigDecimal.ROUND_HALF_UP);
         BigDecimal estimatedArkCost = estimatedEthCost.multiply(arkPerEthExchangeRate);
 
         BigDecimal baseArkCost = estimatedArkCost

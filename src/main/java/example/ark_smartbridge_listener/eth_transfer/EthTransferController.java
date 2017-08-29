@@ -35,6 +35,9 @@ import java.util.UUID;
 @Slf4j
 public class EthTransferController {
 
+    // todo: external value into config file
+    private final BigDecimal arkPerEthAdjustment = new BigDecimal("100");
+
     private final BigDecimal arkFlatFee = new BigDecimal("1.0000000");
     private final BigDecimal arkFeePercent = new BigDecimal("1.25");
     private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
@@ -78,7 +81,9 @@ public class EthTransferController {
         BigDecimal ethAmount = new BigDecimal(ethAmountStr);
 
         // todo: we should sanity check the exchange rate to prevent a bad rate being used
-        BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+        BigDecimal realArkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+        BigDecimal arkPerEthExchangeRate = realArkPerEthExchangeRate
+            .divide(arkPerEthAdjustment, BigDecimal.ROUND_HALF_UP);
         BigDecimal baseArkCost = ethAmount.multiply(arkPerEthExchangeRate)
                 .add(arkTransactionFee); // add transaction fee for return transaction
         BigDecimal arkFeeTotal = baseArkCost.multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP))
