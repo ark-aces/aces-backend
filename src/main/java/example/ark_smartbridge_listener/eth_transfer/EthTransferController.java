@@ -59,7 +59,9 @@ public class EthTransferController {
         GetBalanceResult getBalanceResult = ethBalanceScriptExecutor.execute();
 
         ServiceInfoView serviceInfoView = new ServiceInfoView();
-        serviceInfoView.setCapacity(getBalanceResult.getBalance().toPlainString() + " Eth");
+        serviceInfoView.setCapacity(
+            getBalanceResult.getBalance().setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString()
+                + " Eth");
         serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString());
         serviceInfoView.setPercentFee(arkFeePercent.toPlainString());
         serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
