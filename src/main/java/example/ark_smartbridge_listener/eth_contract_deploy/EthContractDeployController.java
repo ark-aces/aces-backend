@@ -194,7 +194,13 @@ public class EthContractDeployController {
                 ethContractDeployContractEntity.setContractAddress(ethContractDeployResult.getAddress());
                 ethContractDeployContractEntity.setGasUsed(ethContractDeployResult.getGasUsed());
 
-                actualEthCost = ethPerGas.multiply(new BigDecimal(ethContractDeployResult.getGasUsed()));
+                // We should only charge for eth consumed in deployment if successful. Since the contract
+                // deployment is async on the eth blockchain and we won't know the actual gas used at this point,
+                // we'll need to charge the full gasLimit here.
+                // A better solution might be to check the eth contract deployment transaction at a later time
+                // and get that information to send return transaction, but that complicates the code a little since
+                // we need to add an async background worker.
+                actualEthCost = ethPerGas.multiply(new BigDecimal(ethContractDeployContractEntity.getGasLimit()));
 
                 ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
             }

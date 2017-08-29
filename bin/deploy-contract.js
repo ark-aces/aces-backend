@@ -45,30 +45,72 @@ var gasPrice = 20000000000;
 
 // Set up contract
 var contract = web3.eth.contract(abi);
-var instance = contract.new(
-    ...params,
-    {
-        from: account,
-        data: code,
-        gasPrice: gasPrice,
-        gas: gasLimit
-    },
-    function(err, contract) {
-        // This callback gets called once when contract transaction is created and once when
-        // it is mined. It will only have the contract.address value defined when mined.
-        if (err) {
-            console.log(err);
-            process.exit(-1);
-        } else if (contract.address) {
-            // todo: find out if there is a way to get actual gas consumed after deploying contract
-            var gasEstimate = web3.eth.estimateGas({data: code});
+var gasEstimate = web3.eth.estimateGas({data: code});
 
-            console.log(JSON.stringify({
-                "transactionHash": contract.transactionHash,
-                "address": contract.address,
-                "gasUsed": gasEstimate
-            }));
+// For now we can only do asynchronous deployment since the test net has issues deploying contracts via web3.
+// This returns only the contract create transaction id and not the contract address.
+var synchronousDeploy = false;
+if (synchronousDeploy) {
+    var instance = contract.new(
+        ...params,
+        {
+            from: account,
+            data: code,
+            gasPrice: gasPrice,
+            gas: gasLimit
+        },
+        function(err, contract) {
+            // This callback gets called once when contract transaction is created and once when
+            // it is mined. It will only have the contract.address value defined when mined.
+            if (err) {
+                console.log(err);
+                process.exit(-1);
+            }
+
+            if (contract.address) {
+                console.log(JSON.stringify({
+                    "transactionHash": contract.transactionHash,
+                    "address": contract.address,
+                    "gasUsed": gasEstimate
+                }));
+                process.exit(0);
+            }
         }
-    }
-);
+    );
+
+} else {
+    // Create a contract creation transaction and don't wait for it to run
+    var instance = contract.new(
+        ...params,
+        {
+            from: account,
+            data: code,
+            gasPrice: gasPrice,
+            gas: gasLimit
+        },
+        function(err, contract) {
+            // This callback gets called once when contract transaction is created and once when
+            // it is mined. It will only have the contract.address value defined when mined.
+            if (err) {
+                console.log(err);
+                process.exit(-1);
+            }
+
+            if (contract.address) {
+                console.log(JSON.stringify({
+                    "transactionHash": contract.transactionHash,
+                    "address": contract.address,
+                    "gasUsed": gasEstimate
+                }));
+            } else {
+                console.log(JSON.stringify({
+                    "transactionHash": contract.transactionHash,
+                    "address": null,
+                    "gasUsed": null
+                }));
+            }
+            process.exit(0);
+        }
+    );
+}
 
