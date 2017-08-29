@@ -153,6 +153,8 @@ public class EthContractDeployController {
             return;
         }
 
+        log.info("Processing contract with token " + token);
+
         String code = ethContractDeployContractEntity.getContractCode();
 
         Long estimatedGasCost = scriptExecutorService.executeEstimateGas(code).getGasEstimate();

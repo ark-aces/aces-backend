@@ -40,7 +40,6 @@ public class ArkTransactionListener {
 
                         Message message = messageRepository.findOneByToken(transaction.getVendorField());
                         if (message != null) {
-                            log.info("Matched transaction with message token: " + message.getToken());
                             // We got a match! Send it to the corresponding message listener
                             TransactionMatch transactionMatch = new TransactionMatch(transaction.getId(), message.getToken());
                             try {
