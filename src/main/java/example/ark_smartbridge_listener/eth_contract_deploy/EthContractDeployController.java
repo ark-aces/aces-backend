@@ -261,7 +261,12 @@ public class EthContractDeployController {
 
         } else {
             // The ark transaction does not contain sufficient ark to process
+            log.info("Rejected due to given ark being lower than required ark: " +
+                transactionArkAmount.toPlainString() + " (given), " +
+                requiredArkCost.toPlainString() + " (required)");
             ethContractDeployContractEntity.setStatus(EthContractDeployContractEntity.STATUS_REJECTED);
+
+            // todo return un-used ark
         }
 
         ethContractDeployContractRepository.save(ethContractDeployContractEntity);
