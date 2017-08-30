@@ -1,16 +1,14 @@
 package example.ark_smartbridge_listener.test_service;
 
+import example.ark_smartbridge_listener.ArkService;
 import example.ark_smartbridge_listener.NotFoundException;
 import example.ark_smartbridge_listener.ServiceInfoView;
 import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
 import example.ark_smartbridge_listener.ark_listener.TransactionMatch;
-import io.ark.ark_client.ArkClient;
-import io.ark.ark_client.Transaction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -36,16 +33,11 @@ import java.util.UUID;
 public class TestContractController {
 
     private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
-    private final BigInteger satoshisPerArk = new BigInteger("100000000");
 
     private final TestContractRepository testContractRepository;
     private final TestContractViewMapper testContractViewMapper;
-
     private final String serviceArkAddress;
-    private final String serviceArkPassphrase;
-
-    private final ArkClient arkClient;
-    private final RetryTemplate arkClientRetryTemplate;
+    private final ArkService arkService;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
             .rootUri("http://localhost:8080/")
@@ -91,80 +83,45 @@ public class TestContractController {
 
     @GetMapping("/test-contracts/{token}")
     public TestContractView getContract(@PathVariable String token) {
-        TestContractEntity testContractEntity = getTestContractEntityOrThrowException(token);
+        TestContractEntity testContractEntity = getContractEntityOrThrowException(token);
 
         return testContractViewMapper.map(testContractEntity);
     }
 
     @PostMapping("/test-contracts/ark-transaction-matches")
     public void postArkTransactionMatch(@RequestBody TransactionMatch transactionMatch) {
-        String token = transactionMatch.getToken();
-        TestContractEntity testContractEntity = getTestContractEntityOrThrowException(token);
+        TestContractEntity contractEntity = getContractEntityOrThrowException(transactionMatch.getToken());
 
         // Skip already processed transactions
-        if (! testContractEntity.getStatus().equals(TestContractEntity.STATUS_PENDING)) {
+        if (! contractEntity.getStatus().equals(TestContractEntity.STATUS_PENDING)) {
             return;
         }
 
-        Transaction transaction = arkClientRetryTemplate.execute(retryContext ->
-                arkClient.getTransaction(transactionMatch.getArkTransactionId()));
-
-        BigDecimal transactionArkAmount = new BigDecimal(transaction.getAmount())
-                .setScale(14, BigDecimal.ROUND_UP)
-                .divide(new BigDecimal(satoshisPerArk), BigDecimal.ROUND_UP);
-
-        BigDecimal donationArkAmount = testContractEntity.getDonationArkAmount();
-        BigDecimal requiredArkAmount = donationArkAmount.add(arkTransactionFee);
+        BigDecimal sentArkAmount = arkService.getArkAmount(transactionMatch.getArkTransactionId());
 
         // Ensure ark transaction contains enough ark to cover cost
-        if (transactionArkAmount.compareTo(requiredArkAmount) >= 0) {
-            testContractEntity.setStatus(TestContractEntity.STATUS_COMPLETED);
+        BigDecimal usedArkAmount;
+        if (sentArkAmount.compareTo(contractEntity.getRequiredArkAmount()) >= 0) {
+            usedArkAmount = contractEntity.getDonationArkAmount();
+            contractEntity.setStatus(TestContractEntity.STATUS_COMPLETED);
         } else {
-            // The ark transaction does not contain sufficient ark to process
-            testContractEntity.setStatus(TestContractEntity.STATUS_REJECTED);
+            usedArkAmount = BigDecimal.ZERO;
+            contractEntity.setStatus(TestContractEntity.STATUS_REJECTED);
         }
 
-        BigDecimal returnArkAmount = transactionArkAmount
-            .subtract(donationArkAmount)
-            .subtract(arkTransactionFee);
+        BigDecimal returnArkAmount = arkService.calculateReturnArkAmount(sentArkAmount, usedArkAmount);
+        contractEntity.setReturnArkAmount(returnArkAmount);
 
-        testContractEntity.setReturnArkAmount(returnArkAmount);
-
-        if (returnArkAmount.compareTo(BigDecimal.ZERO) >= 0) {
-            // Subtract ark transaction fees from return amount
-            Long arkTransactionFeeSatoshis = arkTransactionFee
-                .multiply(new BigDecimal(satoshisPerArk))
-                .toBigIntegerExact().longValue();
-
-            Long arkDonationSatoshis = testContractEntity.getDonationArkAmount()
-                .multiply(new BigDecimal(satoshisPerArk))
-                .toBigIntegerExact().longValue();
-
-            Long returnSatoshiAmount = transaction.getAmount() - arkDonationSatoshis - arkTransactionFeeSatoshis;
-            if (returnSatoshiAmount < 0) {
-                returnSatoshiAmount = 0L;
-            }
-
-            if (returnSatoshiAmount > 0) {
-                // todo: handle the case where an error occurs sending return ark.
-                // Create return ark transaction with remaining ark
-                Long finalReturnSatoshiAmount = returnSatoshiAmount;
-                String returnArkTransactionId = arkClientRetryTemplate.execute(retryContext ->
-                    arkClient.createTransaction(
-                        testContractEntity.getReturnArkAddress(),
-                        finalReturnSatoshiAmount,
-                        testContractEntity.getToken(),
-                        serviceArkPassphrase
-                    ));
-
-                testContractEntity.setReturnArkTransactionId(returnArkTransactionId);
-            }
+        if (returnArkAmount.compareTo(BigDecimal.ZERO) > 0) {
+            String returnArkTransactionId = arkService
+                .sendArk(contractEntity.getReturnArkAddress(), returnArkAmount, contractEntity.getToken());
+            contractEntity.setReturnArkTransactionId(returnArkTransactionId);
         }
 
-        testContractRepository.save(testContractEntity);
+        testContractRepository.save(contractEntity);
     }
 
-    private TestContractEntity getTestContractEntityOrThrowException(String token) {
+    private TestContractEntity getContractEntityOrThrowException(String token) {
         TestContractEntity testContractEntity = testContractRepository.findOneByToken(token);
         if (testContractEntity == null) {
             throw new NotFoundException("Contract not found");

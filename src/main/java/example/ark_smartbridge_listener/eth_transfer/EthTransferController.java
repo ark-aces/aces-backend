@@ -1,5 +1,6 @@
 package example.ark_smartbridge_listener.eth_transfer;
 
+import example.ark_smartbridge_listener.ArkService;
 import example.ark_smartbridge_listener.EthBalanceScriptExecutor;
 import example.ark_smartbridge_listener.GetBalanceResult;
 import example.ark_smartbridge_listener.NotFoundException;
@@ -9,20 +10,16 @@ import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
 import example.ark_smartbridge_listener.ark_listener.TransactionMatch;
 import example.ark_smartbridge_listener.eth_contract_deploy.EthContractDeployContractEntity;
 import example.ark_smartbridge_listener.exchange_rate_service.ExchangeRateService;
-import io.ark.ark_client.ArkClient;
 import io.ark.ark_client.EthTransactionResult;
-import io.ark.ark_client.Transaction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -35,23 +32,18 @@ import java.util.UUID;
 @Slf4j
 public class EthTransferController {
 
-    // todo: external value into config file
-    private final BigDecimal arkPerEthAdjustment = new BigDecimal("100");
-
     private final BigDecimal arkFlatFee = new BigDecimal("1.0000000");
     private final BigDecimal arkFeePercent = new BigDecimal("1.25");
     private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
-    private final BigInteger satoshisPerArk = new BigInteger("100000000");
 
     private final EthTransferContractRepository ethTransferContractRepository;
     private final EthTransferContractViewMapper ethTransferContractViewMapper;
     private final String serviceArkAddress;
     private final ScriptExecutorService scriptExecutorService;
     private final ExchangeRateService exchangeRateService;
-    private final ArkClient arkClient;
-    private final String serviceArkPassphrase;
-    private final RetryTemplate arkClientRetryTemplate;
     private final EthBalanceScriptExecutor ethBalanceScriptExecutor;
+
+    private final ArkService arkService;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
             .rootUri("http://localhost:8080/")
@@ -80,14 +72,14 @@ public class EthTransferController {
     ) {
         BigDecimal ethAmount = new BigDecimal(ethAmountStr);
 
-        // todo: we should sanity check the exchange rate to prevent a bad rate being used
-        BigDecimal realArkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
-        BigDecimal arkPerEthExchangeRate = realArkPerEthExchangeRate
-            .divide(arkPerEthAdjustment, BigDecimal.ROUND_HALF_UP);
-        BigDecimal baseArkCost = ethAmount.multiply(arkPerEthExchangeRate)
-                .add(arkTransactionFee); // add transaction fee for return transaction
-        BigDecimal arkFeeTotal = baseArkCost.multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP))
-            .add(arkFlatFee);
+        BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+        BigDecimal baseArkCost = ethAmount.multiply(arkPerEthExchangeRate);
+
+        BigDecimal arkFeeTotal = baseArkCost
+            .multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP)
+            .add(arkFlatFee))
+            .add(arkTransactionFee);
+
         BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
 
         EthTransferContractEntity entity = new EthTransferContractEntity();
@@ -116,7 +108,7 @@ public class EthTransferController {
 
     @GetMapping("/eth-transfer-contracts/{token}")
     public EthTransferContractView getTransaction(@PathVariable String token) {
-        EthTransferContractEntity ethTransferContractEntity = getEthTransferContractOrThrowException(token);
+        EthTransferContractEntity ethTransferContractEntity = getContractEntityOrThrowException(token);
 
         return ethTransferContractViewMapper.map(ethTransferContractEntity);
     }
@@ -124,101 +116,52 @@ public class EthTransferController {
     @PostMapping("/eth-transfer-contracts/ark-transaction-matches")
     public void postArkTransactionMatches(@RequestBody TransactionMatch transactionMatch) {
         String token = transactionMatch.getToken();
-        EthTransferContractEntity ethTransferContractEntity = getEthTransferContractOrThrowException(token);
+        EthTransferContractEntity contractEntity = getContractEntityOrThrowException(token);
 
         // Skip already processed transactions
-        if (!ethTransferContractEntity.getStatus().equals(EthContractDeployContractEntity.STATUS_PENDING)) {
+        if (!contractEntity.getStatus().equals(EthTransferContractEntity.STATUS_PENDING)) {
             return;
         }
 
-        Transaction transaction = arkClientRetryTemplate.execute(retryContext ->
-                arkClient.getTransaction(transactionMatch.getArkTransactionId()));
+        try {
+            BigDecimal sentArkAmount = arkService.getArkAmount(transactionMatch.getArkTransactionId());
+            BigDecimal usedArkAmount = BigDecimal.ZERO;
+            if (sentArkAmount.compareTo(contractEntity.getRequiredArkAmount()) >= 0) {
+                // todo: re-estimate cost and fail if given amount is too low
+                BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+                usedArkAmount = contractEntity.getEthAmount().multiply(arkPerEthExchangeRate);
 
-        BigDecimal transactionArkAmount = new BigDecimal(transaction.getAmount())
-                .setScale(14, BigDecimal.ROUND_UP)
-                .divide(new BigDecimal(satoshisPerArk), BigDecimal.ROUND_UP);
-
-        // Ensure ark transaction contains enough ark to cover cost
-        Long deploymentArkSatoshiCost = 0L;
-        if (transactionArkAmount.compareTo(ethTransferContractEntity.getRequiredArkAmount()) >= 0) {
-            // todo: since deploying an eth contract breaks a transaction boundary (eth contract deployment
-            // is not idempotent), we should handle the failure scenario in a better way
-
-            // deploy eth contract corresponding to this ark transaction
-            EthTransactionResult ethTransactionResult;
-            try {
-                ethTransactionResult = scriptExecutorService.executeEthTransaction(
-                    ethTransferContractEntity.getRecipientEthAddress(),
-                    ethTransferContractEntity.getEthAmount().toPlainString()
+                // todo: since deploying an eth contract breaks a transaction boundary (eth contract deployment
+                // is not idempotent), we should handle the failure scenario in a better way
+                EthTransactionResult ethTransactionResult = scriptExecutorService.executeEthTransaction(
+                    contractEntity.getRecipientEthAddress(),
+                    contractEntity.getEthAmount().toPlainString()
                 );
-                ethTransferContractEntity.setEthTransactionHash(ethTransactionResult.getTransactionHash());
+                contractEntity.setEthTransactionHash(ethTransactionResult.getTransactionHash());
 
+                contractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
+            } else {
+                // The ark transaction does not contain sufficient ark to process
+                contractEntity.setStatus(EthContractDeployContractEntity.STATUS_REJECTED);
             }
-            catch (Exception e) {
-                log.error("Failed to execute deploy script", e);
-                ethTransferContractEntity.setStatus(EthTransferContractEntity.STATUS_FAILED);
+
+            BigDecimal returnArkAmount = arkService.calculateReturnArkAmount(sentArkAmount, usedArkAmount);
+            contractEntity.setReturnArkAmount(returnArkAmount);
+
+            if (returnArkAmount.compareTo(BigDecimal.ZERO) > 0) {
+                String returnArkTransactionId = arkService
+                    .sendArk(contractEntity.getReturnArkAddress(), returnArkAmount, contractEntity.getToken());
+                contractEntity.setReturnArkTransactionId(returnArkTransactionId);
             }
-
-            // todo: need to figure out actual eth/ark costs and save to message
-            BigDecimal actualArkAmount = ethTransferContractEntity.getEthAmount().multiply(ethTransferContractEntity.getArkPerEthExchangeRate());
-            ethTransferContractEntity.setActualArkAmount(actualArkAmount);
-
-            deploymentArkSatoshiCost = actualArkAmount.multiply(new BigDecimal(satoshisPerArk))
-                    .toBigInteger()
-                    .longValueExact();
-
-            ethTransferContractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
-        } else {
-            // The ark transaction does not contain sufficient ark to process
-            ethTransferContractEntity.setStatus(EthContractDeployContractEntity.STATUS_REJECTED);
+        } catch (Exception e) {
+            log.error("Failed to execute deploy script", e);
+            contractEntity.setStatus(EthTransferContractEntity.STATUS_FAILED);
         }
 
-        // Subtract ark transaction fees from return amount
-        Long arkTransactionFeeSatoshis = arkTransactionFee
-                .multiply(new BigDecimal(satoshisPerArk))
-                .toBigIntegerExact().longValue();
-
-        Long feeSatoshis = ethTransferContractEntity.getArkFeeTotal()
-            .multiply(new BigDecimal(satoshisPerArk))
-            .toBigIntegerExact().longValue();
-
-        Long returnSatoshiAmount = transaction.getAmount() - deploymentArkSatoshiCost - arkTransactionFeeSatoshis
-            - feeSatoshis;
-        if (returnSatoshiAmount < 0) {
-            returnSatoshiAmount = 0L;
-        }
-
-        BigDecimal returnArkAmount = new BigDecimal(returnSatoshiAmount)
-                .setScale(14, BigDecimal.ROUND_UP)
-                .divide(new BigDecimal(satoshisPerArk), BigDecimal.ROUND_UP);
-        ethTransferContractEntity.setReturnArkAmount(returnArkAmount);
-
-        if (returnSatoshiAmount > 0) {
-            // todo: handle the case where an error occurs sending return ark.
-            // Create return ark transaction with remaining ark
-            Long finalReturnSatoshiAmount = returnSatoshiAmount;
-
-            String returnArkTransactionId;
-            try {
-                returnArkTransactionId = arkClientRetryTemplate.execute(retryContext ->
-                    arkClient.createTransaction(
-                        ethTransferContractEntity.getReturnArkAddress(),
-                        finalReturnSatoshiAmount,
-                        ethTransferContractEntity.getToken(),
-                        serviceArkPassphrase
-                    ));
-                ethTransferContractEntity.setReturnArkTransactionId(returnArkTransactionId);
-            }
-            catch (Exception e) {
-                log.error("Failed to send return ark transaction", e);
-                ethTransferContractEntity.setStatus(EthTransferContractEntity.STATUS_FAILED);
-            }
-        }
-
-        ethTransferContractRepository.save(ethTransferContractEntity);
+        ethTransferContractRepository.save(contractEntity);
     }
 
-    private EthTransferContractEntity getEthTransferContractOrThrowException(String token) {
+    private EthTransferContractEntity getContractEntityOrThrowException(String token) {
         EthTransferContractEntity ethTransactionMessage = ethTransferContractRepository.findOneByToken(token);
         if (ethTransactionMessage == null) {
             throw new NotFoundException("Contract not found");
