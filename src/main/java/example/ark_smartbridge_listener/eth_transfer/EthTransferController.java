@@ -128,19 +128,27 @@ public class EthTransferController {
             BigDecimal usedArkAmount = BigDecimal.ZERO;
             if (sentArkAmount.compareTo(contractEntity.getRequiredArkAmount()) >= 0) {
                 // todo: re-estimate cost and fail if given amount is too low
-                BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
-                usedArkAmount = contractEntity.getEthAmount().multiply(arkPerEthExchangeRate)
-                    .add(contractEntity.getArkFeeTotal());
+                try {
+                    BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
+                    usedArkAmount = contractEntity.getEthAmount().multiply(arkPerEthExchangeRate)
+                        .add(contractEntity.getArkFeeTotal());
 
-                // todo: since deploying an eth contract breaks a transaction boundary (eth contract deployment
-                // is not idempotent), we should handle the failure scenario in a better way
-                EthTransactionResult ethTransactionResult = scriptExecutorService.executeEthTransaction(
-                    contractEntity.getRecipientEthAddress(),
-                    contractEntity.getEthAmount().toPlainString()
-                );
-                contractEntity.setEthTransactionHash(ethTransactionResult.getTransactionHash());
+                    // todo: since deploying an eth contract breaks a transaction boundary (eth contract deployment
+                    // is not idempotent), we should handle the failure scenario in a better way
+                    EthTransactionResult ethTransactionResult = scriptExecutorService.executeEthTransaction(
+                        contractEntity.getRecipientEthAddress(),
+                        contractEntity.getEthAmount().toPlainString()
+                    );
+                    contractEntity.setEthTransactionHash(ethTransactionResult.getTransactionHash());
 
-                contractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
+                    contractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
+                } catch (Exception e) {
+                    log.error("Failed to execute deploy script", e);
+                    contractEntity.setStatus(EthTransferContractEntity.STATUS_FAILED);
+
+                    // assume we didn't spend any eth
+                    usedArkAmount = arkTransactionFee;
+                }
             } else {
                 // The ark transaction does not contain sufficient ark to process
                 usedArkAmount = arkTransactionFee;
@@ -156,7 +164,7 @@ public class EthTransferController {
                 contractEntity.setReturnArkTransactionId(returnArkTransactionId);
             }
         } catch (Exception e) {
-            log.error("Failed to execute deploy script", e);
+            log.error("Error occurred processing contract", e);
             contractEntity.setStatus(EthTransferContractEntity.STATUS_FAILED);
         }
 

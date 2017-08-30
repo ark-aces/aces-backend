@@ -169,29 +169,34 @@ public class EthContractDeployController {
                 // is not idempotent), we should handle the failure scenario in a better way
 
                 // deploy eth contract corresponding to this ark transaction
-                EthContractDeployResult ethContractDeployResult = scriptExecutorService.executeContractDeploy(
-                    contractEntity.getContractAbiJson(),
-                    contractEntity.getContractCode(),
-                    contractEntity.getContractParamsJson(),
-                    contractEntity.getGasLimit()
-                );
-                contractEntity.setContractTransactionHash(ethContractDeployResult.getTransactionHash());
-                contractEntity.setContractAddress(ethContractDeployResult.getAddress());
-                contractEntity.setGasUsed(ethContractDeployResult.getGasUsed());
+                try {
+                    EthContractDeployResult ethContractDeployResult = scriptExecutorService.executeContractDeploy(
+                        contractEntity.getContractAbiJson(),
+                        contractEntity.getContractCode(),
+                        contractEntity.getContractParamsJson(),
+                        contractEntity.getGasLimit()
+                    );
+                    contractEntity.setContractTransactionHash(ethContractDeployResult.getTransactionHash());
+                    contractEntity.setContractAddress(ethContractDeployResult.getAddress());
+                    contractEntity.setGasUsed(ethContractDeployResult.getGasUsed());
 
-                // We should only charge for eth consumed in deployment if successful. Since the contract
-                // deployment is async on the eth blockchain and we won't know the actual gas used at this point,
-                // we'll need to charge the full gasLimit here.
-                // A better solution might be to check the eth contract deployment transaction at a later time
-                // and get that information to send return transaction, but that complicates the code a little since
-                // we need to add an async background worker.
-                BigDecimal actualEthCost = ethPerGas.multiply(new BigDecimal(contractEntity.getGasLimit()));
-                BigDecimal actualArkCost = actualEthCost.multiply(arkPerEthExchangeRate);
-                contractEntity.setDeploymentArkCost(actualArkCost);
+                    // We should only charge for eth consumed in deployment if successful. Since the contract
+                    // deployment is async on the eth blockchain and we won't know the actual gas used at this point,
+                    // we'll need to charge the full gasLimit here.
+                    // A better solution might be to check the eth contract deployment transaction at a later time
+                    // and get that information to send return transaction, but that complicates the code a little since
+                    // we need to add an async background worker.
+                    BigDecimal actualEthCost = ethPerGas.multiply(new BigDecimal(contractEntity.getGasLimit()));
+                    BigDecimal actualArkCost = actualEthCost.multiply(arkPerEthExchangeRate);
+                    contractEntity.setDeploymentArkCost(actualArkCost);
 
-                usedArkAmount = actualArkCost.add(contractEntity.getArkFeeTotal());
+                    usedArkAmount = actualArkCost.add(contractEntity.getArkFeeTotal());
 
-                contractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
+                    contractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
+                } catch (Exception e) {
+                    usedArkAmount = arkTransactionFee;
+                    contractEntity.setStatus(EthContractDeployContractEntity.STATUS_FAILED);
+                }
             } else {
                 usedArkAmount = arkTransactionFee;
                 contractEntity.setStatus(EthContractDeployContractEntity.STATUS_REJECTED);
