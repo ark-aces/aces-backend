@@ -76,8 +76,8 @@ public class EthTransferController {
         BigDecimal baseArkCost = ethAmount.multiply(arkPerEthExchangeRate);
 
         BigDecimal arkFeeTotal = baseArkCost
-            .multiply(arkFeePercent.divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP)
-            .add(arkFlatFee))
+            .multiply(arkFeePercent.divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
+            .add(arkFlatFee)
             .add(arkTransactionFee);
 
         BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
