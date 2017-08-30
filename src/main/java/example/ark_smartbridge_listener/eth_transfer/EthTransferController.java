@@ -2,6 +2,7 @@ package example.ark_smartbridge_listener.eth_transfer;
 
 import example.ark_smartbridge_listener.ArkService;
 import example.ark_smartbridge_listener.EthBalanceScriptExecutor;
+import example.ark_smartbridge_listener.EthCapacityService;
 import example.ark_smartbridge_listener.GetBalanceResult;
 import example.ark_smartbridge_listener.NotFoundException;
 import example.ark_smartbridge_listener.ScriptExecutorService;
@@ -41,7 +42,7 @@ public class EthTransferController {
     private final String serviceArkAddress;
     private final ScriptExecutorService scriptExecutorService;
     private final ExchangeRateService exchangeRateService;
-    private final EthBalanceScriptExecutor ethBalanceScriptExecutor;
+    private final EthCapacityService ethCapacityService;
 
     private final ArkService arkService;
 
@@ -51,11 +52,11 @@ public class EthTransferController {
 
     @GetMapping("/eth-transfer-service-info")
     public ServiceInfoView getServiceInfo() {
-        GetBalanceResult getBalanceResult = ethBalanceScriptExecutor.execute();
+        BigDecimal balance = ethCapacityService.getBalance();
 
         ServiceInfoView serviceInfoView = new ServiceInfoView();
         serviceInfoView.setCapacity(
-            getBalanceResult.getBalance().setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString()
+            balance.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString()
                 + " Eth");
         serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString());
         serviceInfoView.setPercentFee(arkFeePercent.toPlainString());

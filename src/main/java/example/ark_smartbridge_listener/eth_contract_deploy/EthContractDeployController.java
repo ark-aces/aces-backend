@@ -2,6 +2,7 @@ package example.ark_smartbridge_listener.eth_contract_deploy;
 
 import example.ark_smartbridge_listener.ArkService;
 import example.ark_smartbridge_listener.EthBalanceScriptExecutor;
+import example.ark_smartbridge_listener.EthCapacityService;
 import example.ark_smartbridge_listener.GetBalanceResult;
 import example.ark_smartbridge_listener.ScriptExecutorService;
 import example.ark_smartbridge_listener.ServiceInfoView;
@@ -30,6 +31,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @CrossOrigin
 @RestController
@@ -53,6 +55,8 @@ public class EthContractDeployController {
     private final ExchangeRateService exchangeRateService;
     private final EthBalanceScriptExecutor ethBalanceScriptExecutor;
     private final ArkService arkService;
+    private final ConcurrentHashMap<String, BigDecimal> serviceCapacityCache;
+    private final EthCapacityService ethCapacityService;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
         .rootUri("http://localhost:8080/")
@@ -60,11 +64,11 @@ public class EthContractDeployController {
 
     @GetMapping("/eth-contract-deploy-service-info")
     public ServiceInfoView getServiceInfo() {
-        GetBalanceResult getBalanceResult = ethBalanceScriptExecutor.execute();
+        BigDecimal balance = ethCapacityService.getBalance();
 
         ServiceInfoView serviceInfoView = new ServiceInfoView();
         serviceInfoView.setCapacity(
-            getBalanceResult.getBalance().setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString()
+            balance.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString()
                 + " Eth");
         serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString());
         serviceInfoView.setPercentFee(arkFeePercent.toPlainString());
