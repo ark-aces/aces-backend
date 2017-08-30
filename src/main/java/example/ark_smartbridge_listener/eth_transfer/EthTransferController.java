@@ -33,7 +33,7 @@ import java.util.UUID;
 public class EthTransferController {
 
     private final BigDecimal arkFlatFee = new BigDecimal("1.0000000");
-    private final BigDecimal arkFeePercent = new BigDecimal("1.25");
+    private final BigDecimal arkFeePercent = new BigDecimal("1.25000000");
     private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
 
     private final EthTransferContractRepository ethTransferContractRepository;
@@ -70,13 +70,13 @@ public class EthTransferController {
             @RequestParam("recipientEthAddress") String recipientEthAddress,
             @RequestParam("ethAmount") String ethAmountStr
     ) {
-        BigDecimal ethAmount = new BigDecimal(ethAmountStr);
+        BigDecimal ethAmount = new BigDecimal(ethAmountStr).setScale(8, BigDecimal.ROUND_HALF_UP);
 
         BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
         BigDecimal baseArkCost = ethAmount.multiply(arkPerEthExchangeRate);
 
         BigDecimal arkFeeTotal = baseArkCost
-            .multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP)
+            .multiply(arkFeePercent.divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP)
             .add(arkFlatFee))
             .add(arkTransactionFee);
 
@@ -129,7 +129,8 @@ public class EthTransferController {
             if (sentArkAmount.compareTo(contractEntity.getRequiredArkAmount()) >= 0) {
                 // todo: re-estimate cost and fail if given amount is too low
                 BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
-                usedArkAmount = contractEntity.getEthAmount().multiply(arkPerEthExchangeRate);
+                usedArkAmount = contractEntity.getEthAmount().multiply(arkPerEthExchangeRate)
+                    .add(contractEntity.getArkFeeTotal());
 
                 // todo: since deploying an eth contract breaks a transaction boundary (eth contract deployment
                 // is not idempotent), we should handle the failure scenario in a better way

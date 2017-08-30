@@ -102,7 +102,8 @@ public class TestContractController {
         // Ensure ark transaction contains enough ark to cover cost
         BigDecimal usedArkAmount;
         if (sentArkAmount.compareTo(contractEntity.getRequiredArkAmount()) >= 0) {
-            usedArkAmount = contractEntity.getDonationArkAmount();
+            usedArkAmount = contractEntity.getDonationArkAmount()
+                .add(arkTransactionFee);
             contractEntity.setStatus(TestContractEntity.STATUS_COMPLETED);
         } else {
             usedArkAmount = BigDecimal.ZERO;

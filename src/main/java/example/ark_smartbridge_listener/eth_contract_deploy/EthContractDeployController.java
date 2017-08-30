@@ -39,7 +39,7 @@ import java.util.UUID;
 public class EthContractDeployController {
 
     private final BigDecimal arkFlatFee = new BigDecimal("2.0000000");
-    private final BigDecimal arkFeePercent = new BigDecimal("2.25");
+    private final BigDecimal arkFeePercent = new BigDecimal("2.25000000");
 
     // todo: get the current eth per gas rate from the network http://ethgasstation.info/
     private final BigDecimal ethPerGas = new BigDecimal("0.00000002");
@@ -96,9 +96,9 @@ public class EthContractDeployController {
         BigDecimal estimatedEthCost = ethPerGas.multiply(new BigDecimal(estimatedGasCost));
         BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
         BigDecimal estimatedArkCost = estimatedEthCost.multiply(arkPerEthExchangeRate);
-        BigDecimal baseArkCost = estimatedArkCost.multiply(new BigDecimal("1.2")); // require a 1.2 buffer
+        BigDecimal baseArkCost = estimatedArkCost.multiply(new BigDecimal("1.20000000")); // require a 1.2 buffer
         BigDecimal arkFeeTotal = baseArkCost
-            .multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP))
+            .multiply(arkFeePercent.divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
             .add(arkFlatFee)
             .add(arkTransactionFee);
         BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
@@ -157,7 +157,7 @@ public class EthContractDeployController {
             BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
             BigDecimal baseArkCost = estimatedEthCost.multiply(arkPerEthExchangeRate);
             BigDecimal arkFeeTotal = baseArkCost
-                .multiply(arkFeePercent.divide(new BigDecimal("100"), BigDecimal.ROUND_UP))
+                .multiply(arkFeePercent.divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
                 .add(arkFlatFee)
                 .add(arkTransactionFee);
             BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
@@ -189,7 +189,7 @@ public class EthContractDeployController {
                 BigDecimal actualArkCost = actualEthCost.multiply(arkPerEthExchangeRate);
                 contractEntity.setDeploymentArkCost(actualArkCost);
 
-                usedArkAmount = actualArkCost;
+                usedArkAmount = actualArkCost.add(contractEntity.getArkFeeTotal());
 
                 contractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
             } else {

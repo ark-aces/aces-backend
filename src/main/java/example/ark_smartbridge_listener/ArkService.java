@@ -53,8 +53,8 @@ public class ArkService {
 
     public BigDecimal calculateReturnArkAmount(BigDecimal sentArkAmount, BigDecimal usedArkAmount) {
         BigDecimal delta = sentArkAmount.subtract(usedArkAmount);
-        if (delta.add(arkTransactionFee).compareTo(BigDecimal.ZERO) >= 0) {
-            return delta.subtract(arkTransactionFee);
+        if (delta.compareTo(BigDecimal.ZERO) > 0) {
+            return delta;
         } else {
             return BigDecimal.ZERO;
         }
