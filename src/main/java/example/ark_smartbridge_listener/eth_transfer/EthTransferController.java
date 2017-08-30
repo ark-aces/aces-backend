@@ -143,6 +143,7 @@ public class EthTransferController {
                 contractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
             } else {
                 // The ark transaction does not contain sufficient ark to process
+                usedArkAmount = arkTransactionFee;
                 contractEntity.setStatus(EthContractDeployContractEntity.STATUS_REJECTED);
             }
 

@@ -193,7 +193,7 @@ public class EthContractDeployController {
 
                 contractEntity.setStatus(EthContractDeployContractEntity.STATUS_COMPLETED);
             } else {
-                usedArkAmount = BigDecimal.ZERO;
+                usedArkAmount = arkTransactionFee;
                 contractEntity.setStatus(EthContractDeployContractEntity.STATUS_REJECTED);
             }
 

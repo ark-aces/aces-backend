@@ -106,7 +106,7 @@ public class TestContractController {
                 .add(arkTransactionFee);
             contractEntity.setStatus(TestContractEntity.STATUS_COMPLETED);
         } else {
-            usedArkAmount = BigDecimal.ZERO;
+            usedArkAmount = arkTransactionFee;
             contractEntity.setStatus(TestContractEntity.STATUS_REJECTED);
         }
 
