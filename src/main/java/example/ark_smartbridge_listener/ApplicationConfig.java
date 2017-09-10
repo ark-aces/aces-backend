@@ -49,4 +49,15 @@ public class ApplicationConfig {
     public ConcurrentHashMap<String, BigDecimal> serviceCapacityCache() {
         return new ConcurrentHashMap<>();
     }
+
+    @Bean
+    public BigDecimal arkTransactionFee(Environment environment) {
+        return new BigDecimal(environment.getProperty("arkTransactionFee"));
+    }
+
+    @Bean
+    public BigDecimal arkPerEthAdjustment(Environment environment) {
+        return new BigDecimal(environment.getProperty("arkPerEthAdjustment"));
+    }
+
 }

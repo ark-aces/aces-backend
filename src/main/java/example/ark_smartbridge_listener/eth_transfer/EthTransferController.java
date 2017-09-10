@@ -1,9 +1,7 @@
 package example.ark_smartbridge_listener.eth_transfer;
 
 import example.ark_smartbridge_listener.ArkService;
-import example.ark_smartbridge_listener.EthBalanceScriptExecutor;
 import example.ark_smartbridge_listener.EthCapacityService;
-import example.ark_smartbridge_listener.GetBalanceResult;
 import example.ark_smartbridge_listener.NotFoundException;
 import example.ark_smartbridge_listener.ScriptExecutorService;
 import example.ark_smartbridge_listener.ServiceInfoView;
@@ -33,9 +31,9 @@ import java.util.UUID;
 @Slf4j
 public class EthTransferController {
 
-    private final BigDecimal arkFlatFee = new BigDecimal("1.0000000");
-    private final BigDecimal arkFeePercent = new BigDecimal("1.25000000");
-    private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
+    private final EthTransferConfig config;
+
+    private final BigDecimal arkTransactionFee;
 
     private final EthTransferContractRepository ethTransferContractRepository;
     private final EthTransferContractViewMapper ethTransferContractViewMapper;
@@ -43,7 +41,6 @@ public class EthTransferController {
     private final ScriptExecutorService scriptExecutorService;
     private final ExchangeRateService exchangeRateService;
     private final EthCapacityService ethCapacityService;
-
     private final ArkService arkService;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
@@ -55,11 +52,9 @@ public class EthTransferController {
         BigDecimal balance = ethCapacityService.getBalance();
 
         ServiceInfoView serviceInfoView = new ServiceInfoView();
-        serviceInfoView.setCapacity(
-            balance.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString()
-                + " Eth");
-        serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString());
-        serviceInfoView.setPercentFee(arkFeePercent.toPlainString());
+        serviceInfoView.setCapacity(balance.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString() + " Eth");
+        serviceInfoView.setFlatFeeArk(config.getArkFlatFee().toPlainString());
+        serviceInfoView.setPercentFee(config.getArkPercentFee().toPlainString());
         serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
 
         return serviceInfoView;
@@ -74,22 +69,21 @@ public class EthTransferController {
         BigDecimal ethAmount = new BigDecimal(ethAmountStr).setScale(8, BigDecimal.ROUND_HALF_UP);
 
         BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
-        BigDecimal baseArkCost = ethAmount.multiply(arkPerEthExchangeRate);
-
-        BigDecimal arkFeeTotal = baseArkCost
-            .multiply(arkFeePercent.divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
-            .add(arkFlatFee)
+        BigDecimal estimatedArkCost = ethAmount.multiply(arkPerEthExchangeRate);
+        BigDecimal arkFeeTotal = estimatedArkCost
+            .multiply(config.getArkPercentFee().divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
+            .add(config.getArkFlatFee())
             .add(arkTransactionFee);
 
-        BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
+        BigDecimal requiredArkCost = estimatedArkCost.multiply(config.getRequiredArkMultiplier()).add(arkFeeTotal);
 
         EthTransferContractEntity entity = new EthTransferContractEntity();
         entity.setToken(UUID.randomUUID().toString());
         entity.setCreatedAt(ZonedDateTime.from(Instant.now().atOffset(ZoneOffset.UTC)));
         entity.setStatus(EthTransferContractEntity.STATUS_PENDING);
         entity.setServiceArkAddress(serviceArkAddress);
-        entity.setArkFlatFee(arkFlatFee);
-        entity.setArkFeePercent(arkFeePercent);
+        entity.setArkFlatFee(config.getArkFlatFee());
+        entity.setArkFeePercent(config.getArkPercentFee());
         entity.setArkFeeTotal(arkFeeTotal);
         entity.setRequiredArkAmount(requiredArkCost.setScale(8, BigDecimal.ROUND_UP));
         entity.setReturnArkAddress(returnArkAddress);

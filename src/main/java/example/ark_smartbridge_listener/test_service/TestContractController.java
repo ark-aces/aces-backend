@@ -32,7 +32,7 @@ import java.util.UUID;
 @Slf4j
 public class TestContractController {
 
-    private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
+    private final BigDecimal arkTransactionFee;
 
     private final TestContractRepository testContractRepository;
     private final TestContractViewMapper testContractViewMapper;

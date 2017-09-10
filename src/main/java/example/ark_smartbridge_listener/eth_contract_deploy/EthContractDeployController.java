@@ -1,9 +1,7 @@
 package example.ark_smartbridge_listener.eth_contract_deploy;
 
 import example.ark_smartbridge_listener.ArkService;
-import example.ark_smartbridge_listener.EthBalanceScriptExecutor;
 import example.ark_smartbridge_listener.EthCapacityService;
-import example.ark_smartbridge_listener.GetBalanceResult;
 import example.ark_smartbridge_listener.ScriptExecutorService;
 import example.ark_smartbridge_listener.ServiceInfoView;
 import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
@@ -31,7 +29,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @CrossOrigin
 @RestController
@@ -40,22 +37,16 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class EthContractDeployController {
 
-    private final BigDecimal arkFlatFee = new BigDecimal("2.0000000");
-    private final BigDecimal arkFeePercent = new BigDecimal("2.25000000");
+    private final EthContractDeployConfig config;
 
-    // todo: get the current eth per gas rate from the network http://ethgasstation.info/
-    private final BigDecimal ethPerGas = new BigDecimal("0.00000002");
-
-    private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
+    private final BigDecimal arkTransactionFee;
 
     private final EthContractDeployContractRepository ethContractDeployContractRepository;
     private final EthContractDeployContractViewMapper ethContractDeployContractViewMapper;
     private final String serviceArkAddress;
     private final ScriptExecutorService scriptExecutorService;
     private final ExchangeRateService exchangeRateService;
-    private final EthBalanceScriptExecutor ethBalanceScriptExecutor;
     private final ArkService arkService;
-    private final ConcurrentHashMap<String, BigDecimal> serviceCapacityCache;
     private final EthCapacityService ethCapacityService;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
@@ -67,11 +58,9 @@ public class EthContractDeployController {
         BigDecimal balance = ethCapacityService.getBalance();
 
         ServiceInfoView serviceInfoView = new ServiceInfoView();
-        serviceInfoView.setCapacity(
-            balance.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString()
-                + " Eth");
-        serviceInfoView.setFlatFeeArk(arkFlatFee.toPlainString());
-        serviceInfoView.setPercentFee(arkFeePercent.toPlainString());
+        serviceInfoView.setCapacity(balance.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString() + " Eth");
+        serviceInfoView.setFlatFeeArk(config.getArkFlatFee().toPlainString());
+        serviceInfoView.setPercentFee(config.getArkPercentFee().toPlainString());
         serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
 
         return serviceInfoView;
@@ -97,13 +86,13 @@ public class EthContractDeployController {
             // avoid transaction fees for the client
         }
 
-        BigDecimal estimatedEthCost = ethPerGas.multiply(new BigDecimal(estimatedGasCost));
+        BigDecimal estimatedEthCost = config.getEthPerGas().multiply(new BigDecimal(estimatedGasCost));
         BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
         BigDecimal estimatedArkCost = estimatedEthCost.multiply(arkPerEthExchangeRate);
-        BigDecimal baseArkCost = estimatedArkCost.multiply(new BigDecimal("1.20000000")); // require a 1.2 buffer
+        BigDecimal baseArkCost = estimatedArkCost.multiply(config.getRequiredArkMultiplier());
         BigDecimal arkFeeTotal = baseArkCost
-            .multiply(arkFeePercent.divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
-            .add(arkFlatFee)
+            .multiply(config.getArkPercentFee().divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
+            .add(config.getArkFlatFee())
             .add(arkTransactionFee);
         BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
 
@@ -117,8 +106,8 @@ public class EthContractDeployController {
         ethContractDeployContractEntity.setArkPerEthExchangeRate(arkPerEthExchangeRate.setScale(8, BigDecimal.ROUND_UP));
         ethContractDeployContractEntity.setEstimatedGasCost(estimatedGasCost);
         ethContractDeployContractEntity.setEstimatedEthCost(estimatedEthCost.setScale(8, BigDecimal.ROUND_UP));
-        ethContractDeployContractEntity.setArkFlatFee(arkFlatFee);
-        ethContractDeployContractEntity.setArkFeePercent(arkFeePercent);
+        ethContractDeployContractEntity.setArkFlatFee(config.getArkFlatFee());
+        ethContractDeployContractEntity.setArkFeePercent(config.getArkPercentFee());
         ethContractDeployContractEntity.setArkFeeTotal(arkFeeTotal);
         ethContractDeployContractEntity.setRequiredArkCost(requiredArkCost.setScale(8, BigDecimal.ROUND_UP));
         ethContractDeployContractEntity.setCreatedAt(ZonedDateTime.from(Instant.now().atOffset(ZoneOffset.UTC)));
@@ -157,12 +146,12 @@ public class EthContractDeployController {
         try {
             String code = contractEntity.getContractCode();
             Long estimatedGasCost = scriptExecutorService.executeEstimateGas(code).getGasEstimate();
-            BigDecimal estimatedEthCost = ethPerGas.multiply(new BigDecimal(estimatedGasCost));
+            BigDecimal estimatedEthCost = config.getEthPerGas().multiply(new BigDecimal(estimatedGasCost));
             BigDecimal arkPerEthExchangeRate = exchangeRateService.getRate("ETH", "ARK");
             BigDecimal baseArkCost = estimatedEthCost.multiply(arkPerEthExchangeRate);
             BigDecimal arkFeeTotal = baseArkCost
-                .multiply(arkFeePercent.divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
-                .add(arkFlatFee)
+                .multiply(config.getArkPercentFee().divide(new BigDecimal("100.00000000"), BigDecimal.ROUND_UP))
+                .add(config.getArkFlatFee())
                 .add(arkTransactionFee);
             BigDecimal requiredArkCost = baseArkCost.add(arkFeeTotal);
 
@@ -190,7 +179,7 @@ public class EthContractDeployController {
                     // A better solution might be to check the eth contract deployment transaction at a later time
                     // and get that information to send return transaction, but that complicates the code a little since
                     // we need to add an async background worker.
-                    BigDecimal actualEthCost = ethPerGas.multiply(new BigDecimal(contractEntity.getGasLimit()));
+                    BigDecimal actualEthCost = config.getEthPerGas().multiply(new BigDecimal(contractEntity.getGasLimit()));
                     BigDecimal actualArkCost = actualEthCost.multiply(arkPerEthExchangeRate);
                     contractEntity.setDeploymentArkCost(actualArkCost);
 

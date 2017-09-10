@@ -301,28 +301,40 @@ wallet configurations with your own Eth and Ark wallet addresses and passphrase.
 ```
 spring:
   datasource:
-    url: jdbc:h2:/tmp/testdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
-    driver-class-name: org.h2.Driver
+    url: "jdbc:h2:/tmp/testdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE"
+    driver-class-name: "org.h2.Driver"
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: "update"
 
 arkNetwork:
-  name: mainnet
+  name: "mainnet"
 
 ethBridge:
-  ethServerUrl: http://localhost:8545
-  scriptPath: ./bin
-  nodeCommand: /usr/local/bin/node
+  ethServerUrl: "http://localhost:8545"
+  scriptPath: "./bin"
+  nodeCommand: "/usr/bin/node"
 
   serviceArkWallet:
-    address: {changeme}
-    passphrase: {changeme}
+    address: "change me"
+    passphrase: "change me"
     passphrase2:
 
   serviceEthAccount:
-    address: {changeme}
-    password: {changeme}
+    address: "change me"
+    password: "change me"
+    
+arkPerEthAdjustment: "100.00"
+
+ethContractDeployService:
+  arkFlatFee: "2.00"
+  arkPercentFee: "2.25"
+  requiredArkMultiplier: "1.2"
+
+ethTransferService:
+  arkFlatFee: "1.00"
+  arkPercentFee: "1.25"
+  requiredArkMultiplier: "1"
 ```
 
 For production instances, you should configure the application to use a real database like `posgresql`:
@@ -330,14 +342,14 @@ For production instances, you should configure the application to use a real dat
 ```
 spring:
   datasource:
-    url: jdbc:postgresql://{host}:{port}/{database_name}
-    username: {username}
-    password: {password}
+    url: "jdbc:postgresql://{host}:{port}/{database_name}"
+    username: "change me"
+    password: "change me"
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
     generate-ddl: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: "update"
 ```
 
 Copy the following into `/etc/systemd/system/aces-backend.service`:

@@ -1,5 +1,7 @@
 package example.ark_smartbridge_listener.exchange_rate_service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -10,11 +12,10 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class ExchangeRateService
 {
-    // todo externalize in config property
-    // Ark per eth adjustment so that we can scale values down for testnet
-    private final BigDecimal arkPerEthAdjustment = new BigDecimal("100");
+    private final BigDecimal arkPerEthAdjustment;
 
     private final RestTemplate restTemplate = new RestTemplateBuilder()
         .rootUri("https://min-api.cryptocompare.com/data/")

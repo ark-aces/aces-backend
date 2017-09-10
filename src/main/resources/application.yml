@@ -1,11 +1,18 @@
+spring:
+  datasource:
+    url: "jdbc:h2:/tmp/testdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE"
+    driver-class-name: "org.h2.Driver"
+  jpa:
+    hibernate:
+      ddl-auto: "update"
+
 arkNetwork:
-  name: testnet
-  scheme: http
+  name: "testnet"
 
 ethBridge:
-  ethServerUrl: http://localhost:8545
-  scriptPath: ./bin
-  nodeCommand: /usr/local/bin/node
+  ethServerUrl: "http://localhost:8545"
+  scriptPath: "./bin"
+  nodeCommand: "/usr/bin/node"
 
   serviceArkWallet:
     address: D7WLr2EQRwUmP2R4rbnRQuASHXfDhPvBQe
@@ -13,5 +20,21 @@ ethBridge:
     passphrase2:
 
   serviceEthAccount:
-    address: 0x035ea949c57c152b1b8597c1cdc09e18ce2895cd
-    password: 12345
+    address: "0x035ea949c57c152b1b8597c1cdc09e18ce2895cd"
+    password: "12345"
+
+arkTransactionFee: "0.10000000"
+
+# Ark per eth adjustment so that we can scale values down for testnet. Actual arkPerEth exchange
+# rate is divided by this value before being applied.
+arkPerEthAdjustment: "100.00"
+
+ethContractDeployService:
+  arkFlatFee: "2.00"
+  arkPercentFee: "2.25"
+  requiredArkMultiplier: "1.2"
+
+ethTransferService:
+  arkFlatFee: "1.00"
+  arkPercentFee: "1.25"
+  requiredArkMultiplier: "1"

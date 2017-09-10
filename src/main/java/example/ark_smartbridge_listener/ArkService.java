@@ -16,7 +16,6 @@ import java.math.BigInteger;
 @Slf4j
 public class ArkService {
 
-    private final BigDecimal arkTransactionFee = new BigDecimal("0.10000000");
     private final BigInteger satoshisPerArk = new BigInteger("100000000");
 
     private final RetryTemplate arkClientRetryTemplate;
