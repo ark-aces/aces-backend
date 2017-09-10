@@ -396,6 +396,41 @@ git clone https://github.com/bradyo/aces-app.git
 todo: set up api url via config and point that to the backend-api
 https://github.com/bradyo/aces-app/blob/master/src/app/aces-server-config.ts#L8
 
+Copy prod configuration template into custom configuration file:
+
+```
+cd /apps/aces-frontend/aces-app
+cp src/environment/environment.prod.ts src/environment/environment.custom.ts
+```
+
+If using an Ethereum Testnet, copy the following into `/apps/aces-frontend/aces-app/src/environment/environment.custom.ts`:
+
+```
+export const environment = {
+  production: true,
+  title: 'Custom Ark Contract Execution Services (ACES)',
+  isEthTestnet: true,
+  ethNetworkName: 'ropsten',
+  etherscanBaseUrl: 'https://ropsten.etherscan.io',
+  ethArkRateFraction: '1/100',
+  arkExplorerBaseUrl: 'https://explorer.ark.io',
+  acesApiBaseUrl: 'http://localhost/aces-api'
+};
+```
+
+If using the Ethereum Mainnet, copy the following into `/apps/aces-frontend/aces-app/src/environment/environment.custom.ts`:
+
+```
+export const environment = {
+  production: true,
+  title: 'Custom Ark Contract Execution Services (ACES)',
+  isEthTestnet: false,
+  etherscanBaseUrl: 'https://etherscan.io',
+  arkExplorerBaseUrl: 'https://explorer.ark.io',
+  acesApiBaseUrl: 'http://localhost/aces-api'
+};
+```
+
 
 Build the frontend application:
 
@@ -403,7 +438,7 @@ Build the frontend application:
 cd /apps/aces-frontend/aces-app
 npm install -g @angular/cli
 npm install
-ng build --target=production --base-href /aces-app/
+ng build --target=production --env=custom --base-href /aces-app/
 ```
 
 6. Set up nginx web server
