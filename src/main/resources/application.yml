@@ -15,8 +15,8 @@ ethBridge:
   nodeCommand: "/usr/bin/node"
 
   serviceArkWallet:
-    address: D7WLr2EQRwUmP2R4rbnRQuASHXfDhPvBQe
-    passphrase: liar secret already much glow benefit live method during assault road nest
+    address: "D7WLr2EQRwUmP2R4rbnRQuASHXfDhPvBQe"
+    passphrase: "liar secret already much glow benefit live method during assault road nest"
     passphrase2:
 
   serviceEthAccount:
