@@ -400,10 +400,10 @@ Copy prod configuration template into custom configuration file:
 
 ```
 cd /apps/aces-frontend/aces-app
-cp src/environment/environment.prod.ts src/environment/environment.custom.ts
+cp src/environments/environment.prod.ts src/environments/environment.custom.ts
 ```
 
-If using an Ethereum Testnet, copy the following into `/apps/aces-frontend/aces-app/src/environment/environment.custom.ts`:
+If using an Ethereum Testnet, copy the following into `/apps/aces-frontend/aces-app/src/environments/environment.custom.ts`:
 
 ```
 export const environment = {
@@ -418,7 +418,7 @@ export const environment = {
 };
 ```
 
-If using the Ethereum Mainnet, copy the following into `/apps/aces-frontend/aces-app/src/environment/environment.custom.ts`:
+If using the Ethereum Mainnet, copy the following into `/apps/aces-frontend/aces-app/src/environments/environment.custom.ts`:
 
 ```
 export const environment = {
