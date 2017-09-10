@@ -176,6 +176,7 @@ web traffic.
 1. Install system dependencies
 
 ```
+sudo apt-get python-software-properties
 sudo add-apt-repository -y ppa:ethereum/ethereum
 sudo add-apt-repository ppa:webupd8team/java -y
 
