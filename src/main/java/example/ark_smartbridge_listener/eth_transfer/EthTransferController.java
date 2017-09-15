@@ -3,6 +3,7 @@ package example.ark_smartbridge_listener.eth_transfer;
 import example.ark_smartbridge_listener.ArkService;
 import example.ark_smartbridge_listener.EthCapacityService;
 import example.ark_smartbridge_listener.NotFoundException;
+import example.ark_smartbridge_listener.NumberFormatter;
 import example.ark_smartbridge_listener.ScriptExecutorService;
 import example.ark_smartbridge_listener.ServiceInfoView;
 import example.ark_smartbridge_listener.ark_listener.CreateMessageRequest;
@@ -42,6 +43,7 @@ public class EthTransferController {
     private final ExchangeRateService exchangeRateService;
     private final EthCapacityService ethCapacityService;
     private final ArkService arkService;
+    private final NumberFormatter numberFormatter;
 
     private final RestTemplate listenerRestTemplate = new RestTemplateBuilder()
             .rootUri("http://localhost:8080/")
@@ -52,7 +54,7 @@ public class EthTransferController {
         BigDecimal balance = ethCapacityService.getBalance();
 
         ServiceInfoView serviceInfoView = new ServiceInfoView();
-        serviceInfoView.setCapacity(balance.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString() + " Eth");
+        serviceInfoView.setCapacity(numberFormatter.formatNumber(balance) + " Eth");
         serviceInfoView.setFlatFeeArk(config.getArkFlatFee().toPlainString());
         serviceInfoView.setPercentFee(config.getArkPercentFee().toPlainString());
         serviceInfoView.setStatus(ServiceInfoView.STATUS_UP);
