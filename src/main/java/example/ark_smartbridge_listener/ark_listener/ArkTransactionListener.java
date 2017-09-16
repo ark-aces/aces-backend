@@ -16,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 public class ArkTransactionListener {
 
     // Number of Transactions to scan through each execution cycle
-    private final Integer scanDepthTransactions = 50;
+    private final Integer scanDepthTransactions = 500;
 
     private final ArkClient arkClient;
     private final MessageRepository messageRepository;
@@ -29,7 +29,7 @@ public class ArkTransactionListener {
     public void scanTransactions() {
         try {
             // todo: review this scanning so that we don't miss any transactions
-            Integer limit = 50;
+            Integer limit = 500;
             for (Integer offset = 0; offset < scanDepthTransactions; offset += limit) {
                 arkClient.getTransactions(offset).stream()
                     .forEach(transaction -> {

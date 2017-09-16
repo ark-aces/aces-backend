@@ -27,9 +27,15 @@ public class ApplicationConfig {
         ArkNetwork arkNetwork = new ArkNetworkFactory()
             .createFromYml("ark-config/" + arkNetworkName + ".yml");
         
-        RestTemplate restTemplate = new RestTemplateBuilder().build();
+        RestTemplate restTemplate = new RestTemplateBuilder()
+            .setConnectTimeout(2000)
+            .setReadTimeout(2000)
+            .build();
 
-        return new HttpArkClient(arkNetwork, restTemplate);
+        HttpArkClient httpArkClient = new HttpArkClient(arkNetwork, restTemplate);
+        httpArkClient.updatePeers();
+
+        return httpArkClient;
     }
     
     @Bean

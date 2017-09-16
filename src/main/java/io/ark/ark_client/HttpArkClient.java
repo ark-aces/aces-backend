@@ -1,8 +1,12 @@
 package io.ark.ark_client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
 import io.ark.core.Crypto;
+import lib.NiceObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.math.RandomUtils;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
@@ -17,16 +21,65 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+@Slf4j
 public class HttpArkClient implements ArkClient {
-    
+
     private final ArkNetwork arkNetwork;
     private final RestTemplate restTemplate;
+
+    private List<Peer> peers = Collections.synchronizedList(new ArrayList<>());
+
+    public void updatePeers() {
+        Set<Peer> allPeers = Collections.synchronizedSet(new HashSet<>());
+        arkNetwork.getHosts().parallelStream().forEach(host -> {
+            try {
+                String baseUrl = arkNetwork.getHttpScheme() + "://" + host.getHostname() + ":" + host.getPort();
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("nethash", arkNetwork.getNetHash());
+                headers.set("version", arkNetwork.getVersion());
+                headers.set("port", arkNetwork.getPort());
+                HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+                PeerList peerList = restTemplate
+                    .exchange(
+                        baseUrl + "/peer/list",
+                        HttpMethod.GET,
+                        requestEntity,
+                        PeerList.class
+                    )
+                    .getBody();
+                Set<Peer> peers = peerList.getPeers().stream()
+                    .filter(peer -> Objects.equals(peer.getStatus(), "OK"))
+                    .collect(Collectors.toSet());
+                allPeers.addAll(peers);
+            } catch (Exception e) {
+                // ignore failed hosts
+            }
+        });
+
+        Set<Peer> newPeers = new HashSet<>(peers);
+        newPeers.retainAll(allPeers);
+        newPeers.addAll(allPeers);
+        peers.addAll(newPeers);
+        peers.retainAll(newPeers);
+
+        log.info("Updated peers: ");
+        log.info(new NiceObjectMapper(new ObjectMapper()).writeValueAsString(peers));
+    }
 
     @Override
     public List<Transaction> getTransactions(Integer offset) {
@@ -147,8 +200,8 @@ public class HttpArkClient implements ArkClient {
     }
 
     private String getRandomHostBaseUrl() {
-        String httpScheme = arkNetwork.getHttpScheme();
-        ArkNetworkPeer targetHost = arkNetwork.getRandomHost();
-        return httpScheme + "://" + targetHost.getHostname() + ":" + targetHost.getPort();
+        Peer peer = peers.get(RandomUtils.nextInt(peers.size()));
+        return arkNetwork.getHttpScheme() + "://" + peer.getIp() + ":" + peer.getPort();
     }
+
 }

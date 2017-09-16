@@ -19,4 +19,12 @@ public class NiceObjectMapper {
             throw new RuntimeException("Failed to parse json: " + content, e);
         }
     }
+
+    public String writeValueAsString(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write object as json: " + object, e);
+        }
+    }
 }

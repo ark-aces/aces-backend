@@ -2,7 +2,6 @@ package io.ark.ark_client;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang.math.RandomUtils;
 
 import java.util.List;
 
@@ -15,9 +14,5 @@ public class ArkNetwork {
     private final String netHash;
     private final String port;
     private final String version;
-
-    public ArkNetworkPeer getRandomHost() {
-        return hosts.get(RandomUtils.nextInt(hosts.size()));
-    }
 
 }

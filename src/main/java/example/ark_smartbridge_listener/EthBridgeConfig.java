@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
-import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
@@ -64,12 +63,12 @@ public class EthBridgeConfig {
         includeExceptions.put(RuntimeException.class, true);
 
         ExponentialBackOffPolicy exponentialBackOffPolicy = new ExponentialBackOffPolicy();
-        exponentialBackOffPolicy.setInitialInterval(100);
+        exponentialBackOffPolicy.setInitialInterval(10);
         exponentialBackOffPolicy.setMultiplier(2.0);
         retryTemplate.setBackOffPolicy(exponentialBackOffPolicy);
 
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(5, includeExceptions);
-        retryPolicy.setMaxAttempts(5);
+        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(10, includeExceptions);
+        retryPolicy.setMaxAttempts(10);
         retryTemplate.setRetryPolicy(retryPolicy);
 
         return retryTemplate;
