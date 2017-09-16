@@ -1,6 +1,6 @@
-# Experimental Ark SmartBridge Listener
+# ACES Backend Application
 
-This is a proof-of-concept for an Ark Transaction SmartBridge listener. 
+This is a backend application for a basic ACES service node. It provides services for deploying Ethereum smart contracts, doing Ethereum transfers, and a Test Contract service for testing the ACES service flow.
 
 
 ## How It Works
