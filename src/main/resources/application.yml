@@ -33,6 +33,7 @@ ethContractDeployService:
   arkFlatFee: "2.00"
   arkPercentFee: "2.25"
   requiredArkMultiplier: "1.2"
+  ethPerGas: "0.00000002"
 
 ethTransferService:
   arkFlatFee: "1.00"
